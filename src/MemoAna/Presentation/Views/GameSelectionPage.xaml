@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:MemoAna.Presentation.ViewModels"
+             xmlns:domain="clr-namespace:MemoAna.Domain.Entities" 
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:converters="clr-namespace:MemoAna.Presentation.Converters"
+             x:Class="MemoAna.Presentation.Views.GameSelectionPage"
+             x:DataType="vm:GameSelectionViewModel">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:Base64ToImageConverter x:Key="Base64ToImageConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    <Grid RowDefinitions="Auto, Auto, *">
+        <Image Grid.RowSpan="3"
+               Source="empty.png"
+               Aspect="Fill"
+               HorizontalOptions="Fill"
+               VerticalOptions="Fill" />
+
+        <VerticalStackLayout Grid.Row="0" 
+                             Margin="0,120,0,20"
+                             HorizontalOptions="Center" 
+                             Spacing="10">
+            <Label Text="Dificuldade"
+                   FontFamily="Gwenchana"
+                   FontSize="32"
+                   TextColor="SaddleBrown"
+                   HorizontalTextAlignment="Center">
+                <Label.Shadow>
+                    <Shadow Brush="RosyBrown" Offset="2,2" Radius="2" Opacity="0.8"/>
+                </Label.Shadow>
+            </Label>
+        </VerticalStackLayout>
+
+        <VerticalStackLayout Grid.Row="1" 
+                             Spacing="25" 
+                             WidthRequest="230" 
+                             HorizontalOptions="Center">
+            <Border StrokeShape="RoundRectangle 25"
+                    StrokeThickness="0"
+                    HeightRequest="50"
+                    BackgroundColor="BurlyWood"
+                    Stroke="Black">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding PlayCommand}" CommandParameter="0" />
+                </Border.GestureRecognizers>
+                <Border.Shadow>
+                    <Shadow Brush="SaddleBrown" Offset="4,4" Radius="2" Opacity="0.8"/>
+                </Border.Shadow>
+                <Grid>
+                    <BoxView Color="LightGoldenrodYellow" VerticalOptions="Start" HeightRequest="25" Margin="2,2,2,0"/>
+                    <Label Text="INICIANTE" 
+                           FontFamily="Gwenchana" 
+                           FontSize="22" 
+                           TextColor="SaddleBrown" 
+                           HorizontalOptions="Center" 
+                           VerticalOptions="Center">
+                        <Label.Shadow>
+                            <Shadow Brush="LightGoldenrodYellow" Offset="4,4" Radius="2" Opacity="0.8"/>
+                        </Label.Shadow>
+                    </Label>
+                </Grid>
+            </Border>
+
+            <Border StrokeShape="RoundRectangle 25"
+                    StrokeThickness="0"
+                    HeightRequest="50"
+                    BackgroundColor="BurlyWood"
+                    Stroke="Black">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding PlayCommand}" CommandParameter="1"/>
+                </Border.GestureRecognizers>
+                <Border.Shadow>
+                    <Shadow Brush="SaddleBrown" Offset="4,4" Radius="2" Opacity="0.8"/>
+                </Border.Shadow>
+                <Grid>
+                    <BoxView Color="LightGoldenrodYellow" VerticalOptions="Start" HeightRequest="25" Margin="2,2,2,0"/>
+                    <Label Text="NORMAL" 
+                           FontFamily="Gwenchana" 
+                           FontSize="22" 
+                           TextColor="SaddleBrown" 
+                           HorizontalOptions="Center" 
+                           VerticalOptions="Center">
+                        <Label.Shadow>
+                            <Shadow Brush="LightGoldenrodYellow" Offset="4,4" Radius="2" Opacity="0.8" />
+                        </Label.Shadow>
+                    </Label>
+                </Grid>
+            </Border>
+
+            <Border StrokeShape="RoundRectangle 25"
+                    StrokeThickness="0"
+                    HeightRequest="50"
+                    BackgroundColor="BurlyWood"
+                    Stroke="Black">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding PlayCommand}" CommandParameter="2"/>
+                </Border.GestureRecognizers>
+                <Border.Shadow>
+                    <Shadow Brush="SaddleBrown" Offset="4,4" Radius="2" Opacity="0.8"/>
+                </Border.Shadow>
+                <Grid>
+                    <BoxView Color="LightGoldenrodYellow" VerticalOptions="Start" HeightRequest="25" Margin="2,2,2,0"/>
+                    <Label Text="EXPERIENTE" 
+                           FontFamily="Gwenchana" 
+                           FontSize="22" 
+                           TextColor="SaddleBrown" 
+                           HorizontalOptions="Center" 
+                           VerticalOptions="Center">
+                        <Label.Shadow>
+                            <Shadow Brush="LightGoldenrodYellow" Offset="4,4" Radius="2" Opacity="0.8" />
+                        </Label.Shadow>
+                    </Label>
+                </Grid>
+            </Border>
+        </VerticalStackLayout>
+
+        <Grid Grid.Row="2" 
+              RowDefinitions="Auto, Auto" 
+              Margin="0,40,0,20" 
+              VerticalOptions="Fill">
+
+            <Label Grid.Row="0"
+                   Text="Selecione o Tema"
+                   FontFamily="Gwenchana"
+                   FontSize="22"
+                   TextColor="SaddleBrown"
+                   HorizontalTextAlignment="Center" />
+
+            <CarouselView Grid.Row="1"
+                          ItemsSource="{Binding Themes}"
+                          CurrentItem="{Binding SelectedTheme}"
+                          Loop="False"
+                          Margin="0,30,0,30" 
+                          PeekAreaInsets="40"
+                          HorizontalScrollBarVisibility="Never"
+                          IsSwipeEnabled="True"
+                          HorizontalOptions="Fill"
+                          VerticalOptions="Center">
+
+                <CarouselView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Horizontal" 
+                                       SnapPointsAlignment="Center" />
+                </CarouselView.ItemsLayout>
+
+                <CarouselView.ItemTemplate>
+                    <DataTemplate x:DataType="domain:CardThemeManifestEntity">
+                        <VerticalStackLayout HorizontalOptions="Fill" 
+                                             VerticalOptions="Center" 
+                                             Spacing="20"
+                                             WidthRequest="250">
+                            <Border StrokeShape="RoundRectangle 10"
+                                    StrokeThickness="5"
+                                    Stroke="SaddleBrown"
+                                    BackgroundColor="BurlyWood"
+                                    HeightRequest="150"
+                                    WidthRequest="150">
+                                <Border.Shadow>
+                                    <Shadow Brush="Black" Offset="3,3" Radius="3" Opacity="0.5"/>
+                                </Border.Shadow>
+
+                                <Image Source="{Binding PreviewBase64Image, Converter={StaticResource Base64ToImageConverter}}" 
+                                       Aspect="AspectFit"
+                                       Margin="5" HorizontalOptions="Fill"/>
+                            </Border>
+
+                            <Label Text="{Binding ThemeName}"
+                                   FontFamily="Gwenchana"
+                                   FontSize="28"
+                                   TextColor="SaddleBrown"
+                                   HorizontalTextAlignment="Center">
+                                <Label.Shadow>
+                                    <Shadow Brush="LightGoldenrodYellow" Offset="2,2" Radius="1" Opacity="0.9"/>
+                                </Label.Shadow>
+                            </Label>
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </CarouselView.ItemTemplate>
+            </CarouselView>
+        </Grid>
+    </Grid>
+</ContentPage>

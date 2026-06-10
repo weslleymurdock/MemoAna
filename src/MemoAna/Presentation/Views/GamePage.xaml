@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:MemoAna.Presentation.ViewModels"
+             xmlns:core="clr-namespace:MemoAna.Application.Core"
+             xmlns:converters="clr-namespace:MemoAna.Presentation.Converters"
+             x:Class="MemoAna.Presentation.Views.GamePage"
+             x:DataType="vm:GameViewModel">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <converters:Base64ToImageConverter x:Key="Base64ToImageConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto, *, Auto">
+        <Image Grid.RowSpan="3" Source="empty.png" Aspect="AspectFill" />
+
+        <Grid Grid.RowSpan="3" 
+          VerticalOptions="Center" 
+          HorizontalOptions="Center" 
+          RowDefinitions="Auto, Auto" 
+          RowSpacing="15"
+          IsVisible="{Binding IsBusy}">
+
+            <ActivityIndicator Grid.Row="0"
+                           IsRunning="{Binding IsBusy}"
+                           Color="SaddleBrown" 
+                           HeightRequest="80"
+                           WidthRequest="80" />
+
+            <Label Grid.Row="1"
+               Text="Preparando Tabuleiro..."
+               FontFamily="Gwenchana"
+               FontSize="20"
+               TextColor="SaddleBrown"
+               HorizontalTextAlignment="Center">
+                <Label.Shadow>
+                    <Shadow Brush="LightGoldenrodYellow" Offset="2,2" Radius="1" Opacity="0.9"/>
+                </Label.Shadow>
+            </Label>
+        </Grid>
+
+        <Grid Grid.Row="0" 
+          ColumnDefinitions="*, *, *" 
+          Margin="20, 40, 20, 0"
+          IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
+
+            <Label Grid.Column="0" 
+               Text="{Binding CurrentScore}" 
+               FontSize="48" 
+               FontFamily="Gwenchana" 
+               TextColor="LightGoldenrodYellow" 
+               HorizontalOptions="Start" 
+               VerticalOptions="Center"/>
+
+            <Label Grid.Column="1" 
+               Text="{Binding MovesCount}" 
+               FontSize="48" 
+               FontFamily="Gwenchana" 
+               TextColor="LightGoldenrodYellow" 
+               HorizontalOptions="Center" 
+               VerticalOptions="Center"/>
+
+            <Label Grid.Column="2" 
+               Text="{Binding GameTime}" 
+               FontSize="48" 
+               FontFamily="Gwenchana" 
+               TextColor="LightGoldenrodYellow" 
+               HorizontalOptions="End" 
+               VerticalOptions="Center"/>
+        </Grid>
+
+        <CollectionView Grid.Row="1"
+                    IsVisible="{Binding IsGameActive}"
+                    ItemsSource="{Binding Cards}"
+                    Margin="30,0,30,70"
+                    SelectionMode="None"
+                    ItemSizingStrategy="MeasureAllItems"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" 
+                             Span="{Binding Columns}" 
+                             HorizontalItemSpacing="10" 
+                             VerticalItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="core:MemoryCard">
+                    <Grid HeightRequest="90" WidthRequest="70">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:GameViewModel}}, Path=FlipCardCommand}" CommandParameter="{Binding .}" />
+                        </Grid.GestureRecognizers>
+                        <Image Source="back.png" Margin="5" Aspect="AspectFill" IsVisible="{Binding IsFaceUp, Converter={StaticResource InvertedBoolConverter}}"/>
+                        <Border StrokeShape="Rectangle" BackgroundColor="Transparent" IsVisible="{Binding IsFaceUp}">
+                            <Image Source="{Binding CardImage}" Margin="5" Aspect="AspectFit"/>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Grid Grid.Row="1" 
+          RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto" 
+          ColumnDefinitions="*, *"
+          Margin="50, 20"
+          RowSpacing="10"
+          VerticalOptions="Center"
+          IsVisible="{Binding IsGameActive, Converter={StaticResource InvertedBoolConverter}}">
+
+            <Grid.Triggers>
+                <DataTrigger TargetType="Grid" Binding="{Binding IsBusy}" Value="True">
+                    <Setter Property="IsVisible" Value="False" />
+                </DataTrigger>
+            </Grid.Triggers>
+
+            <Label Grid.Row="0" Grid.ColumnSpan="2" Text="{Binding IsVictory}" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="Center" />
+
+            <Label Grid.Row="1" Grid.Column="0" Text="{Binding Statistics.ThemeName}" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="Start" />
+            <Label Grid.Row="1" Grid.Column="1" Text="{Binding Statistics.Difficulty}" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="End" />
+
+            <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding Statistics.PlayedAt}" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="Center" />
+
+            <Label Grid.Row="3" Grid.Column="0" Text="ACERTOS" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="Start" />
+            <Label Grid.Row="3" Grid.Column="1" Text="{Binding Statistics.SuccessfulMoves}" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="End" Margin="0,0,25,0" />
+
+            <Label Grid.Row="4" Grid.Column="0" Text="ERROS" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="Start" />
+            <Label Grid.Row="4" Grid.Column="1" Text="{Binding Statistics.Mistakes}" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="End" Margin="0,0,25,0" />
+
+            <Label Grid.Row="5" Grid.Column="0" Text="SOMA" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="Start" />
+            <Label Grid.Row="5" Grid.Column="1" Text="{Binding Statistics.TotalMoves}" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="End" Margin="0,0,25,0" />
+            
+            <Label Grid.Row="6" Grid.Column="0" Text="PONTOS" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="Start" />
+            <Label Grid.Row="6" Grid.Column="1" Text="{Binding CurrentScore}" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="End" Margin="0,0,25,0" />
+            
+            <Label Grid.Row="7" Grid.Column="0" Text="TOTAL" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="Start" />
+            <Label Grid.Row="7" Grid.Column="1" Text="{Binding Statistics.FinalScore}" FontSize="24" FontFamily="Gwenchana" TextColor="SaddleBrown" HorizontalOptions="End" Margin="0,0,25,0" />
+        </Grid>
+
+        <Grid Grid.Row="2" 
+          ColumnDefinitions="*, *" 
+          ColumnSpacing="20"
+          Margin="30, 0, 30, 120"
+          HorizontalOptions="Center"
+          VerticalOptions="End">
+            <Grid.Triggers>
+                <MultiTrigger TargetType="Grid">
+                    <MultiTrigger.Conditions>
+                        <BindingCondition Binding="{Binding IsGameActive}" Value="False" />
+                        <BindingCondition Binding="{Binding IsBusy}" Value="False" />
+                    </MultiTrigger.Conditions>
+                    <Setter Property="IsVisible" Value="True" />
+                </MultiTrigger>
+            </Grid.Triggers>
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="IsVisible" Value="False" />
+                </Style>
+            </Grid.Style>
+
+            <Border Grid.Column="0"
+                StrokeShape="RoundRectangle 25"
+                StrokeThickness="0"
+                HeightRequest="50"
+                WidthRequest="110"
+                BackgroundColor="BurlyWood"
+                Stroke="Black">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding MainTitleCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Shadow>
+                    <Shadow Brush="SaddleBrown" Offset="2,2" Radius="2" Opacity="0.8"/>
+                </Border.Shadow>
+                <Label Text="INICIO" 
+                   FontFamily="Gwenchana" 
+                   FontSize="22" 
+                   TextColor="SaddleBrown" 
+                   HorizontalOptions="Center" 
+                   VerticalOptions="Center">
+                    <Label.Shadow>
+                        <Shadow Brush="LightGoldenrodYellow" Offset="2,2" Radius="2" Opacity="0.8"/>
+                    </Label.Shadow>
+                </Label>
+            </Border>
+
+            <Border Grid.Column="1"
+                StrokeShape="RoundRectangle 25"
+                StrokeThickness="0"
+                HeightRequest="50"
+                WidthRequest="120"
+                BackgroundColor="BurlyWood"
+                Stroke="Black">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding InitializeGameCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Shadow>
+                    <Shadow Brush="SaddleBrown" Offset="2,2" Radius="2" Opacity="0.8"/>
+                </Border.Shadow>
+                <Label Text="REPETIR" 
+                   FontFamily="Gwenchana" 
+                   FontSize="22" 
+                   TextColor="SaddleBrown" 
+                   HorizontalOptions="Center" 
+                   VerticalOptions="Center">
+                    <Label.Shadow>
+                        <Shadow Brush="LightGoldenrodYellow" Offset="2,2" Radius="2" Opacity="0.8"/>
+                    </Label.Shadow>
+                </Label>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentPage>

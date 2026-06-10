@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:MemoAna.Presentation.ViewModels"
+             x:Class="MemoAna.Presentation.Views.MainPage"
+             x:DataType="vm:MainViewModel">
+    <Grid>
+        <Image Source="empty.png"
+               Aspect="Fill"
+               HorizontalOptions="Fill"
+               VerticalOptions="Fill" />
+
+        <VerticalStackLayout VerticalOptions="Center" 
+                             HorizontalOptions="Center" 
+                             Spacing="40" 
+                             WidthRequest="200">
+
+            <Label Text="MEMO ANA"
+                   FontFamily="Gwenchana"
+                   FontSize="54"
+                   FontAttributes="Bold"
+                   TextColor="BurlyWood"
+                   HorizontalTextAlignment="Center">
+                <Label.Shadow>
+                    <Shadow Brush="Black" Offset="4,4" Radius="2" Opacity="0.8"/>
+                </Label.Shadow>
+            </Label>
+
+            <Border StrokeShape="RoundRectangle 25"
+                    StrokeThickness="0"
+                    HeightRequest="50"
+                    BackgroundColor="BurlyWood"
+                    Stroke="Black">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding PlayCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Shadow>
+                    <Shadow Brush="SaddleBrown" Offset="4,4" Radius="2" Opacity="0.8"/>
+                </Border.Shadow>
+                <Grid>
+                    <BoxView Color="LightGoldenrodYellow" VerticalOptions="Start" HeightRequest="25" Margin="2,2,2,0"/>
+                    <Label Text="JOGAR" 
+                           FontFamily="Gwenchana" 
+                           FontSize="22" 
+                           TextColor="SaddleBrown" 
+                           HorizontalOptions="Center" 
+                           VerticalOptions="Center">
+                        <Label.Shadow>
+                            <Shadow Brush="LightGoldenrodYellow" Offset="4,4" Radius="2" Opacity="0.8"/>
+                        </Label.Shadow>
+                    </Label>
+                </Grid>
+            </Border>
+
+            <Border StrokeShape="RoundRectangle 25"
+                    StrokeThickness="0"
+                    HeightRequest="50"
+                    BackgroundColor="BurlyWood"
+                    Stroke="Black">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding OptionsCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Shadow>
+                    <Shadow Brush="SaddleBrown" Offset="4,4" Radius="2" Opacity="0.8"/>
+                </Border.Shadow>
+                <Grid>
+                    <BoxView Color="LightGoldenrodYellow" VerticalOptions="Start" HeightRequest="25" Margin="2,2,2,0"/>
+                    <Label Text="CONFIGURAR" 
+                           FontFamily="Gwenchana" 
+                           FontSize="22" 
+                           TextColor="SaddleBrown" 
+                           HorizontalOptions="Center" 
+                           VerticalOptions="Center">
+                        <Label.Shadow>
+                            <Shadow Brush="LightGoldenrodYellow" Offset="4,4" Radius="2" Opacity="0.8"/>
+                        </Label.Shadow>
+                    </Label>
+                </Grid>
+            </Border>
+
+            <Border StrokeShape="RoundRectangle 25"
+                    StrokeThickness="0"
+                    HeightRequest="50"
+                    BackgroundColor="BurlyWood"
+                    Stroke="Black">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding AboutCommand}" />
+                </Border.GestureRecognizers>
+                <Border.Shadow>
+                    <Shadow Brush="SaddleBrown" Offset="4,4" Radius="2" Opacity="0.8"/>
+                </Border.Shadow>
+                <Grid>
+                    <BoxView Color="LightGoldenrodYellow" VerticalOptions="Start" HeightRequest="25" Margin="2,2,2,0"/>
+                    <Label Text="SOBRE" 
+                           FontFamily="Gwenchana" 
+                           FontSize="22" 
+                           TextColor="SaddleBrown" 
+                           HorizontalOptions="Center" 
+                           VerticalOptions="Center">
+                        <Label.Shadow>
+                            <Shadow Brush="LightGoldenrodYellow" Offset="4,4" Radius="2" Opacity="0.8"/>
+                        </Label.Shadow>
+                    </Label>
+                </Grid>
+            </Border>
+
+        </VerticalStackLayout>
+
+        <Label Text="{Binding Version, Mode=TwoWay}" 
+               TextColor="#000000" 
+               FontSize="24" 
+               HorizontalOptions="Center" 
+               VerticalOptions="End" />
+    </Grid>
+</ContentPage>
