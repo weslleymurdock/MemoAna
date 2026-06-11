@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/deploy-pages.yml" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/memoana.github.io/memoana.github.io.csproj" />
+    <Project Path="src/MemoAna/MemoAna.csproj" />
+  </Folder>
+</Solution>
