@@ -23,7 +23,7 @@ jobs:
         dotnet-version: '10.0.x' 
 
     - name: Publicar o Projeto (dotnet publish)
-      run: dotnet publish ./src/memoana.github.io/memoana.github.io.csproj -c Release -o release
+      run: dotnet publish ./src/memoana.github.io/memoana.github.io.csproj -c Release -o release /p:BlazorEnableCompression=false
 
     - name: Setup base path
       run: |
@@ -31,7 +31,7 @@ jobs:
         
         touch release/wwwroot/.nojekyll
         
-    - name: Deploy para o GitHub Pages
+    - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@v4
       with:
         folder: release/wwwroot 
