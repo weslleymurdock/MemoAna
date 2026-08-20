@@ -13,7 +13,7 @@ public sealed class Base64ToImageConverter : IValueConverter
             if (base64String.Length < 100) return null;
 
             // 1. Se a imagem já está no cache, devolve ela direto sem processar nada!
-            if (_imageCache.TryGetValue(base64String, out var cachedImage))
+            if (_imageCache.TryGetValue(base64String, out ImageSource? cachedImage))
             {
                 return cachedImage;
             }

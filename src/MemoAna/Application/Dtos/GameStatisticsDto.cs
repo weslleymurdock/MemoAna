@@ -1,7 +1,4 @@
-﻿using MemoAna.Domain.Entities;
-using MemoAna.Domain.Enums;
-
-namespace MemoAna.Application.Dtos;
+﻿namespace MemoAna.Application.Dtos;
 
 public sealed record GameStatisticsDto(string ThemeName, GameDifficulty Difficulty, DateTime PlayedAt, bool IsVictory, int RemainingSeconds, int TotalMoves, int SuccessfulMoves, int Mistakes, int FinalScore)
 {

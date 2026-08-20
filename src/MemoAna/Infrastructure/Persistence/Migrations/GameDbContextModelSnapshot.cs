@@ -15,7 +15,7 @@ namespace MemoAna.Infrastructure.Persistence.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.8");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
 
             modelBuilder.Entity("MemoAna.Domain.Entities.CardThemeEntity", b =>
                 {
@@ -61,6 +61,17 @@ namespace MemoAna.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("CardThemeManifests");
+                });
+
+            modelBuilder.Entity("MemoAna.Domain.Entities.GameSettingsEntity", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Id");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GameSettings");
                 });
 
             modelBuilder.Entity("MemoAna.Domain.Entities.GameStatisticsEntity", b =>
@@ -110,6 +121,42 @@ namespace MemoAna.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Manifest");
+                });
+
+            modelBuilder.Entity("MemoAna.Domain.Entities.GameSettingsEntity", b =>
+                {
+                    b.OwnsOne("MemoAna.Domain.Models.GameOptions", "Options", b1 =>
+                        {
+                            b1.Property<string>("GameSettingsEntityId");
+
+                            b1.Property<int>("CardFlipDelayMs");
+
+                            b1.Property<bool>("CloudSaveEnabled");
+
+                            b1.Property<bool>("ConfirmOnExit");
+
+                            b1.Property<bool>("IsHapticFeedbackEnabled");
+
+                            b1.Property<bool>("IsMusicEnabled");
+
+                            b1.Property<bool>("IsSfxEnabled");
+
+                            b1.Property<int>("Language");
+
+                            b1.HasKey("GameSettingsEntityId");
+
+                            b1.ToTable("GameSettings");
+
+                            b1
+                                .ToJson("Options")
+                                .HasColumnType("TEXT");
+
+                            b1.WithOwner()
+                                .HasForeignKey("GameSettingsEntityId");
+                        });
+
+                    b.Navigation("Options")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("MemoAna.Domain.Entities.CardThemeManifestEntity", b =>

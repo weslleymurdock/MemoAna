@@ -1,4 +1,5 @@
 ﻿using MemoAna.Application.Dtos;
+using MemoAna.Domain.Args;
 using MemoAna.Domain.Enums;
 
 namespace MemoAna.Domain.Entities;
@@ -23,17 +24,6 @@ public sealed class GameStatisticsEntity : BaseEntity
         PlayedAt = DateTime.UtcNow;
     }
 
-    internal GameStatisticsDto ToDto()
-        => new(
-            (this is GameStatisticsEntity gameStatisticsEntity ?
-            gameStatisticsEntity.ThemeName :
-            throw new ArgumentNullException(nameof(gameStatisticsEntity))),
-            gameStatisticsEntity.Difficulty,
-            DateTime.FromFileTimeUtc(gameStatisticsEntity.PlayedAt.ToFileTime()),
-            gameStatisticsEntity.IsVictory,
-            gameStatisticsEntity.RemainingSeconds,
-            gameStatisticsEntity.TotalMoves,
-            gameStatisticsEntity.SuccessfulMoves,
-            gameStatisticsEntity.Mistakes,
-            gameStatisticsEntity.FinalScore);
+    internal GameStatisticsEventArgs ToEventArgs()
+        => new((this is GameStatisticsEntity gs ? gs.ThemeName : throw new ArgumentNullException(nameof(gs))), gs.Difficulty, DateTime.FromFileTimeUtc(gs.PlayedAt.ToFileTime()), gs.IsVictory, gs.RemainingSeconds, gs.TotalMoves, gs.SuccessfulMoves, gs.Mistakes, gs.FinalScore);
 }

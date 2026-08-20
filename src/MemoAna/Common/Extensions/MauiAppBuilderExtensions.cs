@@ -1,25 +1,33 @@
-﻿#pragma warning disable CA1860 
-using MemoAna.Application.Abstract.Repositories;
-using MemoAna.Application.Abstract.Services;
-using MemoAna.Application.Core;
-using MemoAna.Application.Services;
-using MemoAna.Domain.Entities;
-using MemoAna.Infrastructure.Persistence;
+﻿using MemoAna.Infrastructure.Persistence;
 using MemoAna.Infrastructure.Repositories;
 using MemoAna.Presentation.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Plugin.Maui.Audio;
-using System.Reflection;
 using CommunityToolkit.Maui;
+using MemoAna.Presentation.Localization;
 
+using MemoAna.Presentation.Localization;
+using MemoAna.Application.Abstract;
+
+using System.Data.Common;
+
+
+
+
+
+#if ANDROID
+using MemoAna.Platforms.Android.Services;
+#endif
+#if WINDOWS
+using MemoAna.Platforms.Windows.Services;
+#endif
 namespace MemoAna.Common.Extensions;
 
 internal static class MauiAppBuilderExtensions
 {
     extension(MauiAppBuilder builder)
     {
-        internal MauiAppBuilder CreateMauiApp<TApp>()
+        internal MauiApp RunMauiApp<TApp>()
             where TApp : Microsoft.Maui.Controls.Application
         {
             builder
@@ -36,9 +44,16 @@ internal static class MauiAppBuilderExtensions
             builder.Logging.AddDebug();
 #endif
 
-            return builder;
+            builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+            builder.Services.AddSingleton<ILocalizer, Localizer>();
+            return builder.AddInfrastructure()
+            .AddApplication()
+            .AddPlatformServices()
+            .AddPresentation()
+            .TryMigrateDb()
+            .TrySeed();
         }
-        internal MauiAppBuilder AddApplication()
+        private MauiAppBuilder AddApplication()
         {
             builder.Services.AddScoped<IImageConverterService, ImageConverterService>();
             builder.Services.AddScoped<IAudioService, AudioService>();
@@ -46,14 +61,25 @@ internal static class MauiAppBuilderExtensions
             builder.Services.AddScoped<MemoryCard>();
             return builder;
         }
-        internal MauiAppBuilder AddInfrastructure()
+        private  MauiAppBuilder AddInfrastructure()
         {
             builder.Services.AddSingleton<HttpClient>();
             builder.Services.AddSingleton(AudioManager.Current);
             builder.AddSqlite();
             return builder;
         }
-        internal MauiAppBuilder AddPresentation()
+        private  MauiAppBuilder AddPlatformServices()
+        {
+#if ANDROID
+            builder.Services.AddSingleton<IGamePlatformService, PlayGamesService>();
+#endif
+#if WINDOWS
+            builder.Services.AddSingleton<IGamePlatformService, WindowsGamingService>();
+#endif
+
+            return builder; 
+        }
+        private  MauiAppBuilder AddPresentation()
         {
             builder.Services.AddSingleton(sp
                 => Microsoft.Maui.Controls.Application.Current?.Dispatcher
@@ -84,15 +110,15 @@ internal static class MauiAppBuilderExtensions
             return builder;
         }
 
-        internal MauiApp TryMigrateDb()
+        private  MauiApp TryMigrateDb()
         {
-            var app = builder.Build();
-            using var scope = app.Services.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<GameDbContext>();
+            MauiApp app = builder.Build();
+            using IServiceScope scope = app.Services.CreateScope();
+            GameDbContext context = scope.ServiceProvider.GetRequiredService<GameDbContext>();
             try
             {
                 // Legacy data verification before migration: We check if there are any records in the old structure before it gets deleted by the migration.
-                var oldData = LegacyBackup(context);
+                List<LegacyData> oldData = LegacyBackup(context);
 
                 if (context.Database.GetPendingMigrations().Any())
                 {
@@ -100,17 +126,17 @@ internal static class MauiAppBuilderExtensions
                     // The migration will drop the old tables, so we need to backup the data before that happens.
                     // After the backup, we can safely delete the old database if there was any data,
                     // and then apply the new migration to create the new structure.
-                    if (oldData.Any())
+                    if (oldData.Count != 0)
                     {
                         context.Database.EnsureDeleted();
                     }
 
-                    // Cria a estrutura nova perfeitamente (Tabelas: ThemeManifests e CardThemes com FK)
+                    // Criates tbe new structure (Tables: ThemeManifests & CardThemes w/ FK)
                     context.Database.Migrate();
                 }
 
-                // 2. Se pegamos dados do modelo antigo, fazemos o merge reconstruindo as chaves!
-                if (oldData.Any())
+                // 2. If get from old model, do the merge rebuilding keys!
+                if (oldData.Count != 0)
                 {
                     RestoreAndMerge(context, oldData);
                 }
@@ -144,22 +170,20 @@ internal static class MauiAppBuilderExtensions
         var backup = new List<LegacyData>();
         try
         {
-            // Abrimos a conexão nativa para rodar um SQL bruto na tabela antiga
-            var connection = context.Database.GetDbConnection();
+            DbConnection connection = context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open)
                 connection.Open();
 
-            // Query para ler o modelo antigo antes dele deixar de existir
-            using var command = connection.CreateCommand();
+            using DbCommand command = connection.CreateCommand();
             command.CommandText = "SELECT ThemeName, IsDefault, Base64Images FROM CardThemes";
 
-            using var reader = command.ExecuteReader();
+            using DbDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {
                 backup.Add(new LegacyData(
                     ThemeName: reader.GetString(0),
                     IsDefault: reader.GetBoolean(1),
-                    Base64ImagesJson: reader.GetString(2) // original json data
+                    Base64ImagesJson: reader.GetString(2)
                 ));
             }
         }
@@ -173,7 +197,7 @@ internal static class MauiAppBuilderExtensions
 
     private static void RestoreAndMerge(GameDbContext context, List<LegacyData> legacyData)
     {
-        foreach (var legacy in legacyData)
+        foreach (LegacyData legacy in legacyData)
         {
             if (legacy.IsDefault) continue;
 
@@ -194,7 +218,7 @@ internal static class MauiAppBuilderExtensions
                 images = [.. legacy.Base64ImagesJson.Split(',')];
             }
 
-            if (!images.Any()) continue;
+            if (images.Count == 0) continue;
 
             // 2. New structure assembly (Meta)
             var novoManifest = new CardThemeManifestEntity(novoManifestId)
@@ -222,4 +246,3 @@ internal static class MauiAppBuilderExtensions
     private record LegacyData(string ThemeName, bool IsDefault, string Base64ImagesJson);
 
 }
-#pragma warning restore CA1860 

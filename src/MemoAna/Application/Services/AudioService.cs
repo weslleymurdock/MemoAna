@@ -1,9 +1,6 @@
-﻿using MemoAna.Application.Abstract.Services;
-using Plugin.Maui.Audio;
+﻿namespace MemoAna.Application.Services;
 
-namespace MemoAna.Application.Services;
-
-internal class AudioService(IAudioManager manager) : IAudioService, IDisposable
+internal sealed partial class AudioService(IAudioManager manager, IRepository repository) : IAudioService, IDisposable
 {
     private readonly IAudioManager _manager = manager;
     private IAudioPlayer? _player;
@@ -34,29 +31,63 @@ internal class AudioService(IAudioManager manager) : IAudioService, IDisposable
             throw;
         }
     }
-
-    public async Task PlayMainTitleAsync()
+    public async Task PlayFlipAsync()
     {
-        await InitializeAsync("wood-chapter-whispers-of-the-grove.mp3");
-        _player?.Play();
-    }
+        GameSettingsEntity? currentConfig = (await repository.GetAsync<GameSettingsEntity>()).SingleOrDefault();
+        if (currentConfig is GameSettingsEntity gs && gs.Options is GameOptions go && !go.IsSfxEnabled)
+            return;
 
-    public async Task PlayMainGameAsync()
-    {
-        await InitializeAsync("times_running_out-spencer_y_k.mp3");
-        _player?.Play();
-    }
-
-    public async Task PlayWinAsync()
-    {
-        // Certifique-se de preencher o nome quando tiver o arquivo
-        await InitializeAsync("win_effect.mp3");
+        await InitializeAsync("freesound_community-flipcard.mp3");
         _player?.Play();
     }
 
     public async Task PlayLoseAsync()
     {
+        GameSettingsEntity? currentConfig = (await repository.GetAsync<GameSettingsEntity>()).SingleOrDefault();
+        if (currentConfig is GameSettingsEntity gs && gs.Options is GameOptions go && !go.IsMusicEnabled)
+            return;
+
         await InitializeAsync("lose_effect.mp3");
+        _player?.Play();
+    }
+
+    public async Task PlayMainGameAsync()
+    {
+        GameSettingsEntity? currentConfig = (await repository.GetAsync<GameSettingsEntity>()).SingleOrDefault();
+        if (currentConfig is GameSettingsEntity gs && gs.Options is GameOptions go && !go.IsMusicEnabled)
+            return;
+
+        await InitializeAsync("andorios-arcade_music3.mp3");
+        _player?.Play();
+    }
+
+    public async Task PlayMainTitleAsync()
+    {
+        GameSettingsEntity? currentConfig = (await repository.GetAsync<GameSettingsEntity>()).SingleOrDefault();
+        if (currentConfig is GameSettingsEntity gs && gs.Options is GameOptions go && !go.IsMusicEnabled)
+            return;
+
+        await InitializeAsync("andorios-arcade_music7.mp3");
+        _player?.Play();
+    }
+
+    public async Task PlayShuffleFlipAsync()
+    {
+        GameSettingsEntity? currentConfig = (await repository.GetAsync<GameSettingsEntity>()).SingleOrDefault();
+        if (currentConfig is GameSettingsEntity gs && gs.Options is GameOptions go && !go.IsSfxEnabled)
+            return;
+
+        await InitializeAsync("freesound_community-shuffleandcardflip1.mp3");
+        _player?.Play();
+    }
+
+    public async Task PlayWinAsync()
+    {
+        GameSettingsEntity? currentConfig = (await repository.GetAsync<GameSettingsEntity>()).SingleOrDefault();
+        if (currentConfig is GameSettingsEntity gs && gs.Options is GameOptions go && !go.IsMusicEnabled)
+            return;
+
+        await InitializeAsync("win_effect.mp3");
         _player?.Play();
     }
 

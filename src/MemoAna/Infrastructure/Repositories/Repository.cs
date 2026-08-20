@@ -1,6 +1,4 @@
-﻿using MemoAna.Application.Abstract.Repositories;
-using MemoAna.Domain.Entities;
-using MemoAna.Infrastructure.Persistence;
+﻿using MemoAna.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace MemoAna.Infrastructure.Repositories;
@@ -24,6 +22,11 @@ internal sealed class Repository(GameDbContext context) : IRepository
         => context.Set<T>();
     public IQueryable<T> QueryAsNoTracking<T>() where T : BaseEntity
         => context.Set<T>().AsNoTracking();
+
+    public int SaveChanges() => context.SaveChanges();
+
+    public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => context.SaveChangesAsync(cancellationToken);
+
     public async Task UpdateAsync<T>(T entity, CancellationToken cancellationToken = default) where T : BaseEntity
         => context.Set<T>().Update(entity);
 }

@@ -1,10 +1,21 @@
 <Solution>
-  <Folder Name="/.github/" />
-  <Folder Name="/.github/workflows/">
+  <Folder Name="/MemoAna/" />
+  <Folder Name="/MemoAna/.github/" />
+  <Folder Name="/MemoAna/.github/workflows/">
+    <File Path=".github/workflows/ci-ct-cd.yml" />
     <File Path=".github/workflows/deploy-pages.yml" />
   </Folder>
-  <Folder Name="/src/">
+  <Folder Name="/MemoAna/scripts/">
+    <File Path="scripts/gen-cert.ps1" />
+  </Folder>
+  <Folder Name="/MemoAna/src/">
+    <Project Path="docker-compose.dcproj">
+      <Build />
+    </Project>
+    <Project Path="src/MemoAna.Backend/MemoAna.Backend.csproj" />
     <Project Path="src/memoana.github.io/memoana.github.io.csproj" />
-    <Project Path="src/MemoAna/MemoAna.csproj" />
+    <Project Path="src/MemoAna/MemoAna.csproj">
+      <Deploy Solution="Debug|*" />
+    </Project>
   </Folder>
 </Solution>

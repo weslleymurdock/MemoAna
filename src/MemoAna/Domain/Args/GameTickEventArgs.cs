@@ -1,6 +1,6 @@
-﻿namespace MemoAna.Domain.Entities;
+﻿namespace MemoAna.Domain.Args;
 
-public record GameTickEntity(int RemainingSeconds)
+public record GameTickEventArgs(int RemainingSeconds)
 {
     public string NextTime { get => TimeSpan.FromSeconds(RemainingSeconds).ToString(@"mm\:ss"); }
 }

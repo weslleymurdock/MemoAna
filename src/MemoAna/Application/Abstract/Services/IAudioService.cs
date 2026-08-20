@@ -2,10 +2,12 @@
 
 public interface IAudioService  
 {
-    Task PlayMainTitleAsync();
-    Task PlayMainGameAsync();
-    Task PlayWinAsync();
+    Task PlayFlipAsync();
     Task PlayLoseAsync();
+    Task PlayMainGameAsync();
+    Task PlayMainTitleAsync();
+    Task PlayShuffleFlipAsync();
+    Task PlayWinAsync();
     Task StopAsync();
     bool IsPlaying { get; }
 }

@@ -8,9 +8,9 @@ namespace MemoAna.Infrastructure.Persistence;
 internal partial class GameDbContext(DbContextOptions<GameDbContext> options) : DbContext(options)
 {
     public DbSet<CardThemeEntity> CardThemes => Set<CardThemeEntity>();
-    public DbSet<GameStatisticsEntity> GameStatistics => Set<GameStatisticsEntity>();
     public DbSet<CardThemeManifestEntity> CardThemeManifests => Set<CardThemeManifestEntity>();
-
+    public DbSet<GameSettingsEntity> GameSettings => Set<GameSettingsEntity>();
+    public DbSet<GameStatisticsEntity> GameStatistics => Set<GameStatisticsEntity>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -48,6 +48,13 @@ internal partial class GameDbContext(DbContextOptions<GameDbContext> options) : 
             entity.Property(e => e.Mistakes).IsRequired();
             entity.Property(e => e.RemainingSeconds).IsRequired();
             entity.Property(e => e.FinalScore).IsRequired();
+        });
+
+        builder.Entity<GameSettingsEntity>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("Id");
+            entity.OwnsOne(e => e.Options, options => options.ToJson());
         });
     }
 }

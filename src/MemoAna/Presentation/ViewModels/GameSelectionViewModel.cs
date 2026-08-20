@@ -23,12 +23,12 @@ public partial class GameSelectionViewModel(IRepository repository) : BaseViewMo
         {
             IsBusy = true;
 
-            var list = await repository.GetAsync<CardThemeManifestEntity>();
+            IReadOnlyCollection<CardThemeManifestEntity> list = await repository.GetAsync<CardThemeManifestEntity>();
 
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 Themes.Clear();
-                foreach (var theme in list)
+                foreach (CardThemeManifestEntity theme in list)
                 {
                     Themes.Add(theme);
                 }

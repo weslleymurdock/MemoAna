@@ -10,7 +10,7 @@
 		<SingleProject>true</SingleProject>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-
+		<NeutralLanguage>pt-BR</NeutralLanguage>
 		<MauiXamlInflator>SourceGen</MauiXamlInflator>
 
 		<!-- Display name -->
@@ -33,12 +33,44 @@
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU'">
+	  <ApplicationIdGuid>5D1AF598-1F7C-43DA-9671-AADD9A778634</ApplicationIdGuid>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-ios|AnyCPU'">
+	  <ApplicationIdGuid>5D1AF598-1F7C-43DA-9671-AADD9A778634</ApplicationIdGuid>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-maccatalyst|AnyCPU'">
+	  <ApplicationIdGuid>5D1AF598-1F7C-43DA-9671-AADD9A778634</ApplicationIdGuid>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-windows10.0.19041.0|AnyCPU'">
+	  <ApplicationIdGuid>5D1AF598-1F7C-43DA-9671-AADD9A778634</ApplicationIdGuid>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
+	  <ApplicationIdGuid>5D1AF598-1F7C-43DA-9671-AADD9A778634</ApplicationIdGuid>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-ios|AnyCPU'">
+	  <ApplicationIdGuid>5D1AF598-1F7C-43DA-9671-AADD9A778634</ApplicationIdGuid>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-maccatalyst|AnyCPU'">
+	  <ApplicationIdGuid>5D1AF598-1F7C-43DA-9671-AADD9A778634</ApplicationIdGuid>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-windows10.0.19041.0|AnyCPU'">
+	  <ApplicationIdGuid>5D1AF598-1F7C-43DA-9671-AADD9A778634</ApplicationIdGuid>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<!-- App Icon -->
-    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundScale="0.65" Color="#F4EFE0" />
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundScale="0.85" Color="#F4EFE0" />
 
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512256" BaseSize="512,512" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\**\*" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
@@ -57,20 +89,56 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\Seed\**\*" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <AndroidResource Remove="Resources\Localization\**" />
+    <Compile Remove="Resources\Localization\**" />
+    <EmbeddedResource Remove="Resources\Localization\**" />
+    <MauiCss Remove="Resources\Localization\**" />
+    <MauiXaml Remove="Resources\Localization\**" />
+    <None Remove="Resources\Localization\**" />
+  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Maui" Version="14.2.0" />
+    <PackageReference Include="CommunityToolkit.Maui" Version="15.0.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="Google.Apis.Games.v1" Version="1.74.0.4123" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.8" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.70" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.11" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.90" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.11" />
 		<PackageReference Include="Plugin.Maui.Audio" Version="4.0.0" />
-	</ItemGroup> 
+	</ItemGroup>
+
+  <ItemGroup>
+    <Using Include="CommunityToolkit.Mvvm.ComponentModel" />
+    <Using Include="CommunityToolkit.Mvvm.Input" />
+    <Using Include="MemoAna.Application.Abstract.Repositories" />
+    <Using Include="MemoAna.Application.Abstract.Services" />
+    <Using Include="MemoAna.Application.Core" />
+    <Using Include="MemoAna.Application.Dtos" />
+    <Using Include="MemoAna.Application.Services" />
+    <Using Include="MemoAna.Domain.Args" />
+    <Using Include="MemoAna.Domain.Entities" />
+    <Using Include="MemoAna.Domain.Enums" />
+    <Using Include="MemoAna.Domain.Models" />
+    <Using Include="MemoAna.Resources" />
+    <Using Include="Microsoft.Extensions.Localization" />
+    <Using Include="Plugin.Maui.Audio" />
+    <Using Include="System.Collections.ObjectModel" />
+  </ItemGroup>
+
+  <!--<ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android'">
+    <PackageReference Include="Xamarin.GooglePlayServices.Basement" Version="118.10.0.1" />
+    <PackageReference Include="Xamarin.GooglePlayServices.Games.V2" Version="121.0.0.3" />
+    <PackageReference Include="Xamarin.GooglePlayServices.Tasks" Version="118.4.1.1" />
+  </ItemGroup>--> 
 </Project>

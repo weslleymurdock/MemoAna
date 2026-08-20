@@ -1,0 +1,76 @@
+name: Continuous [Integration | Testing | Deployment]]
+
+on:
+  push:
+    branches: [ main ] 
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+  workflow_dispatch:
+
+permissions:
+  contents: write 
+  
+jobs:
+  backend-integration-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout 
+      uses: actions/checkout@v7
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: '10.0.x' 
+
+    - name: Build
+      run: dotnet build ./src/MemoAna.Backend/MemoAna.Backend.csproj -c Release 
+
+    - name: Test
+      run: dotnet test ./tests/MemoAna.Backend.UnitTests/MemoAna.Backend.UnitTests.csproj -c Release 
+    
+  mobile-integration-test:
+    name: Mobile (${{ matrix.workload }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_framework: net10.0-android
+            os: windows-latest
+            workload: android
+          - target_framework: net10.0-windows10.0.19041.0
+            os: windows-latest
+            workload: windows
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Xcode
+        if: matrix.target_framework == 'net10.0-ios' 
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.6'
+
+      - name: Setup Java JDK
+        if: matrix.target_framework == 'net10.0-android'
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'microsoft'
+          java-version: '17'
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install .NET MAUI Workload
+        working-directory: ${{ github.workspace }}/src/app/AmpereApp/
+        run: dotnet workload restore
+
+      - name: Restore dependencies
+        run: dotnet restore Ampere.App.slnx
+
+      - name: Build MAUI Project
+        run: dotnet build Ampere.App.slnx -c Release -f ${{ matrix.target_framework }}

@@ -11,4 +11,6 @@ public interface IRepository
     Task<IReadOnlyCollection<T>> GetAsync<T>(CancellationToken cancellationToken = default) where T : BaseEntity;
     Task DeleteAsync<T>(string id, CancellationToken cancellationToken = default) where T : BaseEntity;
     Task UpdateAsync<T>(T entity, CancellationToken cancellationToken = default) where T : BaseEntity;
+    int SaveChanges();
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

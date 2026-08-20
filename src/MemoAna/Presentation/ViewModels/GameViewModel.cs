@@ -1,14 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using MemoAna.Application.Abstract.Services;
-using MemoAna.Application.Core;
-using MemoAna.Application.Dtos;
-using MemoAna.Application.Services;
-using MemoAna.Domain.Entities;
-using MemoAna.Domain.Enums;
-using System.Collections.ObjectModel;
-
-namespace MemoAna.Presentation.ViewModels;
+﻿namespace MemoAna.Presentation.ViewModels;
 
 public partial class GameViewModel(IGameService gameService, IAudioService audioService) : BaseViewModel, IQueryAttributable
 {
@@ -100,7 +90,7 @@ public partial class GameViewModel(IGameService gameService, IAudioService audio
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 if (gameService.CurrentCards is ObservableCollection<MemoryCard> cardsList)
-                    foreach (var card in cardsList)
+                    foreach (MemoryCard card in cardsList)
                         Cards.Add(card);
 
                 int remainingTime = difficulty switch
@@ -137,7 +127,7 @@ public partial class GameViewModel(IGameService gameService, IAudioService audio
     /// Format first outside main thread to avoid high cpu usage.
     /// Only invokes Main Thread if a real value change happens to avoid unnecessary repainting.
     /// </remarks>
-    private void OnTimerTick(object? sender, GameTickEntity gameTick)
+    private void OnTimerTick(object? sender, GameTickEventArgs gameTick)
     {
         var newScore = gameService.CurrentScore.ToString("D3");
 
@@ -154,7 +144,7 @@ public partial class GameViewModel(IGameService gameService, IAudioService audio
         }
     }
 
-    private void OnGameFinished(object? sender, GameStatisticsEntity e)
+    private void OnGameFinished(object? sender, GameStatisticsEventArgs e)
     {
         MainThread.BeginInvokeOnMainThread(async () =>
         {

@@ -1,11 +1,5 @@
 ﻿#pragma warning disable CA1416
-using MemoAna.Application.Abstract.Repositories;
-using MemoAna.Application.Abstract.Services;
-using MemoAna.Application.Core;
-using MemoAna.Domain.Entities;
-using MemoAna.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.ObjectModel; 
 
 namespace MemoAna.Application.Services;
 
@@ -18,6 +12,7 @@ internal sealed class GameService : IGameService
     private bool _isProcessingTurn;
     private string _currentTheme = string.Empty;
     private GameDifficulty _currentDifficulty;
+    private GameSettingsDto gameSettings = default!;
     private int _totalMoves;
     private int _successfulMoves;
     private int _mistakes;
@@ -30,11 +25,11 @@ internal sealed class GameService : IGameService
     public TimeSpan RemainingTime { get; private set; }
     public bool IsGameActive { get; private set; }
     
-    public event EventHandler<GameStatisticsEntity>? GameFinished;
-    public event EventHandler<GameTickEntity>? TimerTick;
-    public GameService(IRepository cardRepository, IDispatcher dispatcher)
+    public event EventHandler<GameStatisticsEventArgs>? GameFinished;
+    public event EventHandler<GameTickEventArgs>? TimerTick;
+    public GameService(IRepository repository, IDispatcher dispatcher)
     {
-        repository = cardRepository;
+        this.repository = repository;
 
         _gameTimer = dispatcher.CreateTimer();
         _gameTimer.Interval = TimeSpan.FromSeconds(1);
@@ -47,7 +42,7 @@ internal sealed class GameService : IGameService
         _firstSelectedCard = null;
         _secondSelectedCard = null;
         _isProcessingTurn = false;
-
+        
         _currentTheme = theme;
         _currentDifficulty = difficulty;
         _totalMoves = 0;
@@ -58,7 +53,7 @@ internal sealed class GameService : IGameService
 
         CurrentCards.Clear();
 
-        var (pairCount, totalSeconds) = difficulty switch
+        (int pairCount, int totalSeconds) = difficulty switch
         {
             GameDifficulty.Easy => (6, 75),
             GameDifficulty.Medium => (10, 100),
@@ -66,15 +61,22 @@ internal sealed class GameService : IGameService
             _ => (6, 75)
         };
 
+        gameSettings = repository.QueryAsNoTracking<GameSettingsEntity>()
+                    .Select(GameSettingsDto.FromEntity)
+                    .Single();
 
-        var manifest = await repository.Query<CardThemeManifestEntity>()
+        CardThemeManifestEntity manifest = await repository.QueryAsNoTracking<CardThemeManifestEntity>()
                      .Where(m => m.ThemeName == theme)
-                     .Include(m => m.CardTheme)
+                     .SingleAsync();
+
+        CardThemeEntity cards = await repository.QueryAsNoTracking<CardThemeEntity>()
+                     .Where(c => c.ManifestId == manifest.Id)
                      .SingleAsync();
 
         var random = new Random();
 
-        var rawStrings = manifest?.CardTheme?.Base64Images.OrderBy(_ => random.Next()).Take(pairCount).ToList()
+        // .OrderBy(_ => random.Next()) ensures always get a random set of cards from manifest
+        List<string> rawStrings = cards?.Base64Images.OrderBy(_ => random.Next()).Take(pairCount).ToList()
             ?? throw new KeyNotFoundException("Imagens do tema não encontradas");
 
         var gameCards = new List<MemoryCard>();
@@ -96,7 +98,7 @@ internal sealed class GameService : IGameService
 
         var shuffledCards = gameCards.OrderBy(_ => random.Next()).ToList();
 
-        foreach (var card in shuffledCards)
+        foreach (MemoryCard? card in shuffledCards)
             CurrentCards.Add(card);
 
         IsGameActive = true;
@@ -139,7 +141,7 @@ internal sealed class GameService : IGameService
             _mistakes++;
             _currentStreak = 0;
 
-            await Task.Delay(900);
+            await Task.Delay(gameSettings.Options.CardFlipDelayMs);
 
             MainThread.BeginInvokeOnMainThread(() =>
             {
@@ -174,7 +176,7 @@ internal sealed class GameService : IGameService
 
         RemainingTime = RemainingTime.Subtract(TimeSpan.FromSeconds(1));
 
-        TimerTick?.Invoke(this, new GameTickEntity((int)RemainingTime.TotalSeconds));
+        TimerTick?.Invoke(this, new GameTickEventArgs((int)RemainingTime.TotalSeconds));
 
         if (RemainingTime.TotalSeconds <= 0)
         {
@@ -212,12 +214,13 @@ internal sealed class GameService : IGameService
             Mistakes = _mistakes,
             RemainingSeconds = remainingSeconds,
             FinalScore = finalScoreCalculated,
-            PlayedAt = DateTime.Now 
+            PlayedAt = DateTime.UtcNow 
         };
 
         try
         {
             await repository.AddAsync(stats);
+            await repository.SaveChangesAsync();
         }
         catch (Exception ex)
         {
@@ -225,7 +228,7 @@ internal sealed class GameService : IGameService
         }
         finally
         {
-            GameFinished?.Invoke(this, stats);
+            GameFinished?.Invoke(this, stats.ToEventArgs());
         }
     }
 }

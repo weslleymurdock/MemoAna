@@ -1,7 +1,5 @@
-﻿#pragma warning disable CA1860
-using MemoAna.Domain.Entities;
+﻿using MemoAna.Domain.Entities;
 using MemoAna.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
 namespace MemoAna.Common.Extensions;
@@ -10,14 +8,31 @@ internal static class MauiAppExtensions
 {
     extension(MauiApp app)
     {
-        public MauiApp TrySeed()
+        internal MauiApp TrySeed()
         {
             try
             {
-                using var scope = app.Services.CreateScope();
-                var context = scope.ServiceProvider.GetRequiredService<GameDbContext>();
+                using IServiceScope scope = app.Services.CreateScope();
+                GameDbContext context = scope.ServiceProvider.GetRequiredService<GameDbContext>();
 
-                // Validação do Seed baseada na tabela leve (Manifest)
+                if (!context.GameSettings.Any())
+                {
+                    context.GameSettings.Add(new GameSettingsEntity()
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Options = 
+                        {
+                            CardFlipDelayMs = 900,
+                            CloudSaveEnabled = true,
+                            ConfirmOnExit = true,
+                            IsHapticFeedbackEnabled = true,
+                            IsMusicEnabled = true,
+                            IsSfxEnabled = true,
+                            Language = Domain.Enums.Language.system
+                        }
+                    });
+                    context.SaveChanges();
+                }
                 if (context.CardThemeManifests.Any(ct => ct.IsDefault && (ct.ThemeName.ToLower() == "disney" || ct.ThemeName.ToLower() == "marvel" || ct.ThemeName.ToLower() == "pokemon")))
                 {
                     return app;
@@ -49,7 +64,7 @@ internal static class MauiAppExtensions
     }
     private static void ProcessAndAddTheme(GameDbContext context, Assembly assembly, string themeName, List<string> resources, string defaultExt)
     {
-        if (!resources.Any()) return;
+        if (resources.Count <= 0) return;
 
         var base64List = new List<string>();
 
@@ -68,7 +83,7 @@ internal static class MauiAppExtensions
             base64List.Add(base64String);
         }
 
-        if (!base64List.Any()) return;
+        if (base64List.Count <= 0) return;
 
         var manifestId = Guid.NewGuid().ToString();
         var themeId = Guid.NewGuid().ToString();
@@ -78,17 +93,19 @@ internal static class MauiAppExtensions
             ThemeName = themeName,
             IsDefault = true,
             PreviewBase64Image = base64List.First(),
-            CardThemeId = themeId
+            CardThemeId = themeId,
+            Id = manifestId
         };
 
         var cardTheme = new CardThemeEntity(themeId)
         {
             Base64Images = base64List,
-            ManifestId = manifestId
+            ManifestId = manifestId,
+            Manifest = manifest,
+            Id = themeId
         };
 
         context.CardThemeManifests.Add(manifest);
         context.CardThemes.Add(cardTheme);
     }
 }
-#pragma warning restore CA1860

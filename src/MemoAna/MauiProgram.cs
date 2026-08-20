@@ -5,10 +5,5 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp() 
         => MauiApp.CreateBuilder()
-            .CreateMauiApp<App>()
-            .AddInfrastructure()
-            .AddApplication()
-            .AddPresentation()
-            .TryMigrateDb()
-            .TrySeed();
+            .RunMauiApp<App>();
 }

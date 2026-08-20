@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 
 namespace MemoAna.Application.Services;
 
-
 internal class ImageConverterService(HttpClient client) : IImageConverterService
 {
     public async Task<string> ImageFromFileToBase64Async(string filePath)
