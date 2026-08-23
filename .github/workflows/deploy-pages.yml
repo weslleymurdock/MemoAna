@@ -23,7 +23,7 @@ jobs:
         dotnet-version: '10.0.x' 
 
     - name: Publish
-      run: dotnet publish ./src/cge.github.io/cge.github.io.csproj -c Release -o release /p:BlazorEnableCompression=false
+      run: dotnet publish ./src/docs/cge.github.io/cge.github.io.csproj -c Release -o release /p:BlazorEnableCompression=false
 
     - name: Setup base path
       run: |

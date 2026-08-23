@@ -1,0 +1,125 @@
+﻿@page "/"
+
+<MudPaper class="main-page">
+    <MudImage Src="images/empty.png"
+              Class="background-image"
+              Alt="" />
+    <MudCard class="menu-container">
+        <MudText Class="game-title">
+            @Localizer["GameTitle"].ToUpper()
+        </MudText>
+        <MudButton Href="/selection" Class="menu-button">
+            <div class="button-content">
+                <div class="button-highlight"></div>
+                <MudText Class="button-text">@Localizer["Play"]</MudText>
+            </div>
+        </MudButton>
+        <MudButton Href="/options" Class="menu-button">
+            <div class="button-content">
+                <div class="button-highlight"></div>
+                <MudText Class="button-text">@Localizer["Options"] </MudText>
+            </div>
+        </MudButton>
+        <MudButton Href="/about" Class="menu-button">
+            <div class="button-content">
+                <div class="button-highlight"></div>
+                <MudText Class="button-text">@Localizer["About"]</MudText>
+            </div>
+        </MudButton>
+    </MudCard>
+</MudPaper>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await audio.PlayMainTitleAsync();
+        await base.OnInitializedAsync();
+    }
+}
+
+<style>
+    .main-page {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .background-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+    }
+
+    .menu-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 40px;
+        z-index: 1;
+    }
+
+    .game-title {
+        font-family: Gwenchana, sans-serif;
+        font-size: 54px;
+        font-weight: bold;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        color: burlywood;
+        text-shadow:
+            4px 4px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    .menu-button {
+        position: relative;
+        width: 200px;
+        height: 50px;
+        min-height: 50px;
+        padding: 0;
+        border-radius: 25px;
+        background-color: burlywood;
+        color: saddlebrown;
+        box-shadow: 4px 4px 2px rgba(139, 69, 19, 0.8);
+        overflow: hidden;
+    }
+
+    .button-content {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .button-highlight {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        right: 2px;
+        height: 25px;
+        background-color: lightgoldenrodyellow;
+        border-radius: 23px 23px 0 0;
+        z-index: 0;
+    }
+
+    .button-text {
+        position: relative;
+        z-index: 1;
+        font-family: Gwenchana, sans-serif;
+        font-size: 22px;
+        font-weight: normal;
+        color: saddlebrown;
+        text-shadow:
+            4px 4px 2px rgba(250, 250, 210, 0.8);
+    }
+</style>

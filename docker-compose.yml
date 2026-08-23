@@ -8,7 +8,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: 80
       ASPNETCORE_HTTPS_PORTS: 443
-      ConnectionStrings__MemoAnaDB: "Host=memoana-db;Port=5432;Database=${POSTGRES_DB:-MemoAnaDB};Username=${POSTGRES_USER:-memoana};Password=${POSTGRES_PASSWORD:-M3M0@n@}" 
+      ConnectionStrings__Postgres: "Host=memoana-db;Port=5432;Database=${POSTGRES_DB:-MemoAnaDB};Username=${POSTGRES_USER:-memoana};Password=${POSTGRES_PASSWORD:-M3M0@n@}" 
       Jwt__Key: ${JWT_KEY:-"5t8iai8+8U6+KkWe7A/FMMjOQsKVik/JVR2TedmbM2XSdwn3pKQ+AKFloMlE1gBKq8Pi/Yl6GzyYxSCMeTLatQ=="}
       ASPNETCORE_Kestrel__Certificates__Default__Path: /root/memoana.pfx
       ASPNETCORE_Kestrel__Certificates__Default__Password: ${CERT_PASSWORD:-"M3M0@n@"}
@@ -24,6 +24,7 @@ services:
       - memoana-protection-keys:/root:ro 
       - ./certs/memoana.pfx:/root/memoana.pfx:ro
       - ./certs/memoana.crt:/root/memoana.crt:ro 
+  
   memoana-db:
     image: postgres:17
     environment:

@@ -1,0 +1,28 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "MemoAna: Run Android Debug",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "run",
+                "--project",
+                "${workspaceFolder}/src/app/MemoAna/MemoAna.csproj",
+                "-c",
+                "Debug",
+                "-f",
+                "net10.0-android"
+                // "--device",
+                // "${input:androidDevice}"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true,
+                "showReuseMessage": false
+            }
+        }
+    ] 
+}

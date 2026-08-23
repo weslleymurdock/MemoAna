@@ -1,0 +1,393 @@
+﻿@page "/selection"
+@inject ILogger<GameSelection> logger
+@inject IThemeService service
+<MudPaper Class="game-selection-page">
+    <!-- Background -->
+    <img src="images/empty.png"
+         class="game-selection-background"
+         alt="" />
+    <!-- Difficulty -->
+    <MudPaper Class="difficulty-section">
+        <MudText Class="difficulty-title">
+            @Localizer["Difficulty"]
+        </MudText>
+        <MudCard Class="difficulty-options">
+            <MudButton Class="difficulty-button ma-2 pa-2" Disabled="@IsBusy" OnClick="@(() => PlayAsync("0"))">
+                <div class="difficulty-button-content">
+                    <div class="button-highlight"></div>
+                    <MudText Class="difficulty-button-text">
+                        @Localizer["Starter"]
+                    </MudText>
+                </div>
+            </MudButton>
+            <MudButton Class="difficulty-button ma-2 pa-2" Disabled="@IsBusy" OnClick="@(() => PlayAsync("1"))">
+                <div class="difficulty-button-content">
+                    <div class="button-highlight"></div>
+                    <MudText Class="difficulty-button-text">
+                        @Localizer["Medium"]
+                    </MudText>
+                </div>
+            </MudButton>
+            <MudButton Class="difficulty-button ma-2 pa-2" Disabled="@IsBusy" OnClick="@(() => PlayAsync("2"))">
+                <div class="difficulty-button-content">
+                    <div class="button-highlight"></div>
+                    <MudText Class="difficulty-button-text">
+                        @Localizer["Hard"]
+                    </MudText>
+                </div>
+            </MudButton>
+        </MudCard>
+    </MudPaper>
+    <!-- Themes -->
+    <MudPaper Class="theme-section">
+        <MudText Class="theme-title">
+            @Localizer["ThemeSelection"]
+        </MudText>
+        @if (IsBusy && Themes.Count == 0)
+        {
+            <MudCard Class="theme-loading">
+                <MudProgressCircular Indeterminate="true" Color="Color.Warning" Size="Size.Medium" />
+            </MudCard>
+        }
+        else if (Themes.Count > 0)
+        {
+            <MudCarousel TData="CardThemeManifestDto"
+                         ItemsSource="@Themes"
+                         Class="theme-carousel"
+                         AutoCycle="false"
+                         ShowArrows="true"
+                         ShowBullets="true"
+                         BulletsColor="Color.Warning"
+                         ArrowsColor="Color.Warning">
+                @foreach (var theme in Themes)
+                {
+                    <MudCarouselItem>
+                        <MudPaper Class="theme-item ma-2 pa-2"@onclick="@(() => SelectTheme(theme))">
+                            <MudCard Class=@(IsSelected(theme) ? "theme-preview theme-preview-selected" : "theme-preview")>
+                                <MudImage Src="@GetThemeImage(theme)" Class="theme-image" Alt="@theme.ThemeName" />
+                            </MudCard>
+                            <MudText Class="theme-name">
+                                @theme.ThemeName
+                            </MudText>
+                        </MudPaper>
+                    </MudCarouselItem>
+                }
+            </MudCarousel>
+        }
+    </MudPaper>
+</MudPaper>
+
+@code {
+    bool IsBusy { get; set; } = false;
+    CardThemeManifestDto? SelectedTheme { get; set; } = null!;
+    ObservableCollection<CardThemeManifestDto> Themes { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadThemesAsync();
+        await base.OnInitializedAsync();
+    }
+    private async Task PlayAsync(string difficultyParam)
+    {
+        if (IsBusy) return; IsBusy = true;
+        if (SelectedTheme == null) return;
+        if (!int.TryParse(difficultyParam, out int difficulty)) return;
+        navigation.NavigateTo($"/game?Theme={SelectedTheme.CardThemeId}&Difficulty={difficulty}");
+        IsBusy = false;
+    }
+
+    private void SelectTheme(CardThemeManifestDto theme)
+    {
+        SelectedTheme = theme;
+    }
+
+    private bool IsSelected(CardThemeManifestDto theme)
+    {
+        return ReferenceEquals(SelectedTheme, theme);
+    }
+
+    private static string GetThemeImage(CardThemeManifestDto theme)
+    {
+        if (string.IsNullOrWhiteSpace(theme.PreviewBase64Image))
+            return string.Empty;
+
+        if (theme.PreviewBase64Image.StartsWith("data:image", StringComparison.OrdinalIgnoreCase))
+            return theme.PreviewBase64Image;
+
+        return $"data:image/png;base64,{theme.PreviewBase64Image}";
+    }
+
+    private async Task LoadThemesAsync()
+    {
+        if (IsBusy) return;
+
+        try
+        {
+            IsBusy = true;
+            logger.LogInformation("Loading Themes...");
+            IReadOnlyCollection<CardThemeManifestDto> list = await service.GetThemesAsync();
+
+            @* MainThread.BeginInvokeOnMainThread(() => *@
+            @* { *@
+                Themes.Clear();
+                foreach (CardThemeManifestDto theme in list)
+                {
+                    Themes.Add(theme);
+                }
+            @* }); *@
+            logger.LogInformation("Themes loaded.");
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error when getting themes: {Message}", e.Message);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+}
+<style>
+
+    .game-selection-page {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* 
+     * Background
+     */
+
+    .game-selection-background {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+        user-select: none;
+        pointer-events: none;
+    }
+
+    /* 
+     * Difficulty
+     */
+
+    .difficulty-section {
+        position: absolute;
+        top: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        z-index: 2;
+    }
+
+    .difficulty-title {
+        font-family: Gwenchana, sans-serif;
+        font-size: 32px;
+        color: saddlebrown;
+        text-align: center;
+        text-shadow: 2px 2px 2px rgba(188, 143, 143, 0.8);
+    }
+
+    .difficulty-options {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 25px;
+        width: 230px;
+        margin-top: 20px;
+    }
+
+    .difficulty-button {
+        position: relative;
+        width: 230px;
+        height: 50px;
+        min-height: 50px;
+        padding: 0;
+        border-radius: 25px;
+        background-color: burlywood;
+        color: saddlebrown;
+        box-shadow: 4px 4px 2px rgba(139, 69, 19, 0.8);
+        overflow: hidden;
+    }
+
+    .difficulty-button-content {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .button-highlight {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        right: 2px;
+        height: 25px;
+        background-color: lightgoldenrodyellow;
+        border-radius: 23px 23px 0 0;
+        z-index: 0;
+    }
+
+    .difficulty-button-text {
+        position: relative;
+        z-index: 1;
+        font-family: Gwenchana, sans-serif;
+        font-size: 22px;
+        color: saddlebrown;
+        text-shadow: 4px 4px 2px rgba(250, 250, 210, 0.8);
+    }
+
+    /* ---------------------------------------------------------
+     * Theme
+     */
+
+    .theme-section {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 20px;
+        height: calc(100vh - 430px);
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 2;
+    }
+
+    .theme-title {
+        font-family: Gwenchana, sans-serif;
+        font-size: 22px;
+        color: saddlebrown;
+        text-align: center;
+    }
+
+    .theme-carousel {
+        width: 100%;
+        max-width: 100%;
+        flex: 1;
+        margin-top: 30px;
+        margin-bottom: 30px;
+    }
+
+    .theme-item {
+        width: 250px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        margin: auto;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .theme-preview {
+        width: 150px;
+        height: 150px;
+        padding: 5px;
+        box-sizing: border-box;
+        background-color: burlywood;
+        border: 5px solid saddlebrown;
+        border-radius: 10px;
+        box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.5);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+        .theme-preview:hover {
+            transform: scale(1.03);
+        }
+
+    .theme-preview-selected {
+        box-shadow: 0 0 0 3px lightgoldenrodyellow, 3px 3px 3px rgba(0, 0, 0, 0.5);
+    }
+
+    .theme-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+
+    .theme-name {
+        font-family: Gwenchana, sans-serif;
+        font-size: 28px;
+        color: saddlebrown;
+        text-align: center;
+        text-shadow: 2px 2px 1px rgba(250, 250, 210, 0.9);
+    }
+
+    /* 
+     *Loading
+     */
+
+    .theme-loading {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* 
+     * Responsive
+     */
+
+    @@media (max-height: 750px) {
+
+        .difficulty-section {
+            top: 80px;
+        }
+
+        .difficulty-options {
+            gap: 12px;
+        }
+
+        .difficulty-button {
+            height: 44px;
+            min-height: 44px;
+        }
+
+        .theme-section {
+            height: calc(100vh - 350px);
+        }
+    }
+
+    @@media (max-width: 600px) {
+
+        .difficulty-section {
+            top: 80px;
+        }
+
+        .difficulty-button {
+            width: 200px;
+        }
+
+        .difficulty-options {
+            width: 200px;
+            gap: 15px;
+        }
+
+        .theme-section {
+            bottom: 10px;
+        }
+
+        .theme-item {
+            width: 200px;
+        }
+
+        .theme-preview {
+            width: 130px;
+            height: 130px;
+        }
+    }
+
+</style>

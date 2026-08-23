@@ -1,18 +1,23 @@
+using FluentValidation;
+using Infisical.Sdk;
+using Infisical.Sdk.Model;
 using MemoAna.Backend.Application.Common.Abstractions;
 using MemoAna.Backend.Application.Common.Contracts;
 using MemoAna.Backend.Application.Common.Pipeline.Validation;
+using MemoAna.Backend.Application.Health.Abstractions;
 using MemoAna.Backend.Application.Identity.Abstractions;
 using MemoAna.Backend.Application.Identity.Handlers;
 using MemoAna.Backend.Application.Identity.Validators;
+using MemoAna.Backend.Infrastructure.Common.HealthChecks;
 using MemoAna.Backend.Infrastructure.Common.Repository;
+using MemoAna.Backend.Infrastructure.Common.Services;
 using MemoAna.Backend.Infrastructure.Common.UnitOfWork;
 using MemoAna.Backend.Infrastructure.Identity.Models;
 using MemoAna.Backend.Infrastructure.Identity.Options;
 using MemoAna.Backend.Infrastructure.Identity.Services;
 using MemoAna.Backend.Infrastructure.Persistence;
 using MemoAna.Backend.Infrastructure.Persistence.Middlewares;
-using FluentValidation;
-using Mediator;
+using MemoAna.Backend.Infrastructure.Persistence.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
@@ -20,11 +25,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using MongoDB.Bson;
+using MongoDB.Driver;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
-using MemoAna.Backend.Infrastructure.Persistence.Options;
-using Microsoft.Extensions.Hosting;
 
 namespace MemoAna.Backend.Composition.Extensions;
 
@@ -37,7 +43,7 @@ public static class WebApplicationBuilderExtensions
         /// <typeparam name="TProgram">The program type.</typeparam>
         /// <typeparam name="TApp">The root component.</typeparam>
         /// <returns>A task for application startup.</returns>
-        public async Task RunMemoAnaAsync<TProgram, TApp>(Action<WebApplicationBuilder> configure)
+        public async Task RunMemoAnaAsync<TProgram, TApp>(Action<WebApplicationBuilder> configurePresentationServices)
             where TProgram : class
             where TApp : IComponent
         {
@@ -47,13 +53,49 @@ public static class WebApplicationBuilderExtensions
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
-                
+
+            if (builder.Environment.IsProduction())
+            {
+
+                var settings = new InfisicalSdkSettingsBuilder()    
+                    //.WithHostUri("http://localhost:8080") // Optional. Will default to https://app.infisical.com
+                    .Build();
+
+                var client = new InfisicalClient(settings);
+
+                string cid = Environment.GetEnvironmentVariable("MUACID")?.ToString() ?? throw new InvalidOperationException("Environment variables not set up");
+                string cs = Environment.GetEnvironmentVariable("MUACS")?.ToString() ?? throw new InvalidOperationException("Environment variables not set up");
+
+                MachineIdentityCredential credential = await client.Auth().UniversalAuth().LoginAsync(cid, cs);
+
+                var options = new ListSecretsOptions
+                {
+                    SetSecretsAsEnvironmentVariables = true,
+                    EnvironmentSlug = "prod",
+                    SecretPath = "/memoana",
+                    Recursive = true,
+                    ExpandSecretReferences = true,
+                    ProjectId = "",
+                    ViewSecretValue = true,
+                };
+
+                Secret[] secrets = await client.Secrets().ListAsync(options) ?? throw new InvalidOperationException("Failed to fetch secrets, returned null response");
+            }
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
             builder.Services.AddControllers();
             builder.Services.AddSignalR();
             builder.Services.AddOpenApi();
-            configure?.Invoke(builder);
+            
+            configurePresentationServices?.Invoke(builder);
+
+            builder.Services
+                .AddHealthChecks()
+                .AddCheck<ApiCheck>("ApiCheck")
+                .AddCheck<ApiDiskUsageCheck>("ApiDiskUsageCheck")
+                .AddCheck<HostInfoCheck>("HostInfoCheck")
+                .AddCheck<DatabaseCheck>("DatabaseCheck");
+
             builder.Services.Configure<JwtOptions>(
                 builder.Configuration.GetSection(
                     JwtOptions.SectionName));
@@ -62,7 +104,7 @@ public static class WebApplicationBuilderExtensions
                     ConnectionStringsOptions.SectionName));
 
             builder.Services.AddDbContext<MemoAnaDbContext>(
-                options => {
+                options => { 
                     if (builder.Environment.IsProduction())
                     {
                         ConnectionStringsOptions cs = builder.Configuration
@@ -75,10 +117,10 @@ public static class WebApplicationBuilderExtensions
                     }
                     else if (builder.Environment.IsDevelopment())
                     {
-                        string? ConnectionStrings__MemoAna = Environment.GetEnvironmentVariable("ConnectionStrings__MemoAna")?.ToString();
-                        ArgumentNullException.ThrowIfNullOrEmpty(ConnectionStrings__MemoAna,nameof(ConnectionStrings__MemoAna));
-                        ArgumentNullException.ThrowIfNullOrWhiteSpace(ConnectionStrings__MemoAna,nameof(ConnectionStrings__MemoAna));
-                        options.UseNpgsql(ConnectionStrings__MemoAna, sql => sql.CommandTimeout(90));
+                        string? ConnectionStrings__Postgress = Environment.GetEnvironmentVariable("ConnectionStrings__Postgress")?.ToString();
+                        ArgumentNullException.ThrowIfNullOrEmpty(ConnectionStrings__Postgress,nameof(ConnectionStrings__Postgress));
+                        ArgumentNullException.ThrowIfNullOrWhiteSpace(ConnectionStrings__Postgress,nameof(ConnectionStrings__Postgress));
+                        options.UseNpgsql(ConnectionStrings__Postgress, sql => sql.CommandTimeout(90));
                     }
                     else throw new InvalidOperationException("No data provider configured");
                 });
@@ -109,6 +151,7 @@ public static class WebApplicationBuilderExtensions
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddValidatorsFromAssemblyContaining<RegisterCommandValidator>();
+            builder.Services.AddScoped<IHealthService, HealthService>();
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
@@ -182,13 +225,11 @@ public static class WebApplicationBuilderExtensions
                 });
 
             builder.Services.AddAuthorizationBuilder()
-                .AddPolicy(
-                    IdentityPolicies.Administrator,
+                .AddPolicy(IdentityPolicies.Administrator,
                     policy => policy.RequireClaim(
                         IdentityClaimTypes.Permission,
                         "system.admin"))
-                .AddPolicy(
-                    IdentityPolicies.User,
+                .AddPolicy(IdentityPolicies.User,
                     policy => policy.RequireClaim(
                         IdentityClaimTypes.Permission,
                         "system.user"));

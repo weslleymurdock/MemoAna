@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace MemoAna
+namespace MemoAna.Platforms.iOS
 {
     public class Program
     {

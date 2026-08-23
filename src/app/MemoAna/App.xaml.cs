@@ -1,9 +1,6 @@
-﻿global using APP = Microsoft.Maui.Controls.Application;
-global using Microsoft.Extensions.DependencyInjection;
-global using MemoAna.Presentation.Views;
-namespace MemoAna
+﻿namespace MemoAna
 {
-    public partial class App : APP
+    public partial class App : Microsoft.Maui.Controls.Application
     {
         public App()
         {
@@ -11,7 +8,8 @@ namespace MemoAna
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
-            => new(new AppShell());
-        
+        {
+            return new Window(new MainPage()) { Title = "MemoAna" };
+        }
     }
 }

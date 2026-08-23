@@ -1,16 +1,11 @@
 ﻿using Android.App;
 using Android.Content.PM;
 using Android.OS;
-using Java.Lang;
 
-namespace MemoAna;
-
-[Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, LaunchMode = LaunchMode.SingleTop, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density, Immersive = true)]
-public class MainActivity : MauiAppCompatActivity
+namespace MemoAna.Platforms.Android
 {
-    protected override void OnCreate(Bundle? savedInstanceState)
+    [Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
+    public class MainActivity : MauiAppCompatActivity
     {
-        JavaSystem.LoadLibrary("log");
-        base.OnCreate(savedInstanceState);
     }
 }

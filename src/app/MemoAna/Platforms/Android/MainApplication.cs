@@ -1,7 +1,7 @@
 ﻿using Android.App;
 using Android.Runtime;
 
-namespace MemoAna
+namespace MemoAna.Platforms.Android
 {
     [Application]
     public class MainApplication : MauiApplication

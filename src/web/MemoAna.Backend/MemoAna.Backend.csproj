@@ -26,8 +26,4 @@
     <ProjectReference Include="..\MemoAna.Backend.Application\MemoAna.Backend.Application.csproj" />
     <ProjectReference Include="..\MemoAna.Backend.Composition\MemoAna.Backend.Composition.csproj" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <Folder Include="Composition\" />
-  </ItemGroup>
 </Project>

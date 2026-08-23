@@ -1,0 +1,591 @@
+﻿@page "/game"
+@using Microsoft.AspNetCore.Components
+@implements IAsyncDisposable 
+@inject ILogger<Game> logger
+
+<div class="game-page">
+    <!-- Background -->
+    <img src="images/empty.png"
+         class="game-background"
+         alt="" />
+
+    <!-- Loading -->
+    @if (IsBusy)
+    {
+        <div class="loading-container">
+            <MudProgressCircular Indeterminate="true"
+                                 Size="Size.Large"
+                                 Color="Color.Warning"
+                                 Class="loading-indicator" />
+            <MudText Class="loading-text">
+                Preparando Tabuleiro...
+            </MudText>
+        </div>
+    }
+
+    <!-- Game header -->
+    @if (!IsBusy)
+    {
+        <div class="game-header">
+            <MudText Class="game-header-score">
+                @CurrentScore
+            </MudText>
+            <MudText Class="game-header-moves">
+                @MovesCount
+            </MudText>
+            <MudText Class="game-header-time">
+                @GameTime
+            </MudText>
+        </div>
+    }
+
+    <!-- Game board -->
+    @if (IsGameActive)
+    {
+        <div class="game-board" style="--columns: @Columns">
+            @foreach (var card in Cards)
+            {
+                <div class="memory-card" @onclick="() => FlipCard(card)">
+                    @if (!card.IsFaceUp)
+                    {
+                        <img src="images/back.png"
+                             class="card-image card-back"
+                             alt="" />
+                    }
+                    else
+                    {
+                        <div class="card-front">
+                            <img src="@card.CardImage" class="card-image card-face" alt="" />
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    <!-- Game statistics -->
+    @if (!IsGameActive && !IsBusy)
+    {
+        <div class="statistics-container">
+            <MudText Class="victory-text">
+                @IsVictory
+            </MudText>
+            <div class="statistics-grid">
+                <MudText Class="statistic-value statistic-left">
+                    @Statistics.ThemeName
+                </MudText>
+                <MudText Class="statistic-value statistic-right">
+                    @Statistics.Difficulty
+                </MudText>
+                <MudText Class="statistic-value statistic-center">
+                    @Statistics.PlayedAt
+                </MudText>
+                <MudText Class="statistic-label">
+                    ACERTOS
+                </MudText>
+                <MudText Class="statistic-value statistic-right">
+                    @Statistics.SuccessfulMoves
+                </MudText>
+                <MudText Class="statistic-label">
+                    ERROS
+                </MudText>
+                <MudText Class="statistic-value statistic-right">
+                    @Statistics.Mistakes
+                </MudText>
+                <MudText Class="statistic-label">
+                    SOMA
+                </MudText>
+                <MudText Class="statistic-value statistic-right">
+                    @Statistics.TotalMoves
+                </MudText>
+                <MudText Class="statistic-label">
+                    PONTOS
+                </MudText>
+                <MudText Class="statistic-value statistic-right">
+                    @CurrentScore
+                </MudText>
+                <MudText Class="statistic-label">
+                    TOTAL
+                </MudText>
+                <MudText Class="statistic-value statistic-right">
+                    @Statistics.FinalScore
+                </MudText>
+            </div>
+        </div>
+    }
+    <!-- Bottom actions -->
+    @if (!IsGameActive && !IsBusy)
+    {
+        <div class="game-actions">
+            <MudButton Class="game-action-button"
+                       OnClick="GoToMain">
+                INICIO
+            </MudButton>
+            <MudButton Class="game-action-button game-action-repeat"
+                       OnClick="RestartGame">
+                REPETIR
+            </MudButton>
+        </div>
+    }
+</div>
+
+
+
+@code {
+    [SupplyParameterFromQuery(Name = "Theme")]
+    public string? Id { get; set; }
+
+    [SupplyParameterFromQuery(Name = "Difficulty")]
+    public string? Difficulty { get; set; }
+
+    bool IsBusy { get; set; } = false;
+    string Theme { get; set; } = string.Empty;
+    string GameTime { get; set; } = "00:00";
+    string CurrentScore { get; set; } = "0";
+    string MovesCount { get; set; } = "0"; 
+    int Rows { get; set; } = 3;
+    int Columns { get; set; } = 4;
+    bool IsGameActive { get; set; } = false;
+    bool GameEnded { get; set; } = false;
+    string IsVictory { get; set; } = string.Empty;
+    GameStatisticsDto Statistics { get; set; } = GameStatisticsDto.Default;
+    ObservableCollection<MemoryCard> Cards { get; set; } = [];
+    private string _lastTimeStr = string.Empty;
+    private string _lastScoreStr = string.Empty;
+    private bool _isinitializing = false;
+
+    protected override void OnInitialized()
+    {
+        logger.LogInformation("Entering Game...");
+        base.OnInitialized();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) return;
+        StateHasChanged();
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task FlipCard(MemoryCard card)
+    {
+        if (IsBusy) return;
+
+        if (card == null || !IsGameActive) return;
+
+        IsBusy = true;
+
+        await game.FlipCardAsync(card);
+
+        MovesCount = game.TotalMoves.ToString();
+
+        CurrentScore = game.CurrentScore.ToString("D4");
+        IsBusy = false;
+
+    }
+
+    private async Task InitializeGameAsync()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(Id) || string.IsNullOrEmpty(Id)) return;
+
+            IsBusy = true;
+            GameEnded = false;
+            IsGameActive = false;
+            GameTime = "00:00";
+            CurrentScore = "000";
+            MovesCount = "0";
+            Cards.Clear();
+            var level = int.Parse(Difficulty ?? "1");
+            ConfigureGridGeometry(level);
+            game.GameFinished -= OnGameFinished;
+            game.GameFinished += OnGameFinished;
+            game.TimerTick -= OnTimerTick;
+            game.TimerTick += OnTimerTick;
+
+            // Loads database and generates ImageSources in background
+            await Task.Run(async () => await game.StartGameAsync(level, Theme));
+
+            // Single safe UI update
+            if (game.CurrentCards is ObservableCollection<MemoryCard> cardsList)
+                foreach (MemoryCard card in cardsList)
+                    Cards.Add(card);
+
+            int remainingTime = level switch
+            {
+                0 => 75,
+                1 => 100,
+                2 => 120,
+                _ => 75
+            };
+            GameTime = TimeSpan.FromSeconds(remainingTime).ToString(@"mm\:ss");
+
+            IsGameActive = true;
+            IsBusy = false;
+
+            if (!GameEnded)
+            {
+                await audio.StopAsync();
+                await audio.PlayMainGameAsync();
+            }
+        }
+        catch (Exception e)
+        {
+            System.Diagnostics.Debug.WriteLine($"[GameViewModel] Erro crítico: {e.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private void GoToMain() => navigation.NavigateTo("/");
+
+    private void RestartGame()
+    {
+        
+    }
+
+    /// <summary>
+    /// Game timer tick event.
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="gameTick"></param>
+    /// <remarks>
+    /// Format first outside main thread to avoid high cpu usage.
+    /// Only invokes Main Thread if a real value change happens to avoid unnecessary repainting.
+    /// </remarks>
+    private void OnTimerTick(object? sender, GameTickEventArgs gameTick)
+    {
+        var newScore = game.CurrentScore.ToString("D3");
+
+        if (gameTick.NextTime != _lastTimeStr || newScore != _lastScoreStr)
+        {
+            _lastTimeStr = gameTick.NextTime;
+            _lastScoreStr = newScore;
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                GameTime = gameTick.NextTime;
+                CurrentScore = newScore;
+            });
+        }
+    }
+
+    private void OnGameFinished(object? sender, GameStatisticsEventArgs e)
+    {
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            IsGameActive = false;
+            GameEnded = true;
+            Statistics = new GameStatisticsDto(e.ThemeName, e.Difficulty, e.PlayedAt,e.IsVictory,e.RemainingSeconds,e.TotalMoves,e.SuccessfulMoves,e.Mistakes,e.FinalScore);
+            IsVictory = e.IsVictory ? "+1 CONQUISTA!" : "DERROTA!";
+            await audio.StopAsync();
+        });
+    }
+
+    /// <summary>
+    /// Critical memory cleanup method. 
+    /// </summary>
+    /// <remarks>
+    /// Called by <see cref="IAsyncDisposable"/>.DisposeAsync 
+    /// </remarks>
+    public async Task CleanupGame()
+    {
+        if (game is GameService service)
+        {
+            service.ForceStopTimer();
+        }
+
+        game.GameFinished -= OnGameFinished;
+        game.TimerTick -= OnTimerTick;
+
+        IsGameActive = false;
+        await audio.StopAsync();
+    }
+
+    private void ConfigureGridGeometry(int difficulty)
+    {
+        (Rows, Columns) = difficulty switch
+        {
+            0 => (4, 3),
+            1 => (5, 4),
+            2 => (6, 5),
+            _ => (4, 3)
+        };
+    }
+
+    public async void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (_isinitializing) return;
+
+        if (query.TryGetValue("Theme", out var themeValue))
+            Theme = themeValue?.ToString() ?? string.Empty;
+
+        if (query.TryGetValue("Difficulty", out var difficultyValue))
+            Difficulty = difficultyValue?.ToString() ?? string.Empty;
+
+        if (!string.IsNullOrEmpty(Theme) && !string.IsNullOrEmpty(Difficulty))
+        {
+            _isinitializing = true;
+            await InitializeGameAsync();
+            _isinitializing = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CleanupGame();
+    }
+}
+
+<style>
+    .game-page {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+    }
+    /*
+     *  Background
+     */
+    .game-background {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+        user-select: none;
+        pointer-events: none;
+    }
+    /*
+     *  Loading
+     */
+    .loading-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        z-index: 10;
+    }
+
+    .loading-indicator {
+        color: saddlebrown;
+    }
+
+    .loading-text {
+        font-family: Gwenchana, sans-serif;
+        font-size: 20px;
+        color: saddlebrown;
+        text-shadow: 2px 2px 1px rgba(250, 250, 210, 0.9);
+    }
+    /*
+     *  Header
+     */    
+    .game-header {
+        position: absolute;
+        top: 40px;
+        left: 20px;
+        right: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: center;
+        z-index: 2;
+    }
+
+    .game-header-score,
+    .game-header-moves,
+    .game-header-time {
+        font-family: Gwenchana, sans-serif;
+        font-size: 48px;
+        color: lightgoldenrodyellow;
+        line-height: 1;
+    }
+
+    .game-header-score {
+        text-align: left;
+    }
+
+    .game-header-moves {
+        text-align: center;
+    }
+
+    .game-header-time {
+        text-align: right;
+    }
+    /*
+     *  Board
+     */
+    .game-board {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: grid;
+        grid-template-columns: repeat(var(--columns), 70px);
+        gap: 10px;
+        margin: 0 30px 70px;
+        z-index: 2;
+    }
+
+    .memory-card {
+        width: 70px;
+        height: 90px;
+        cursor: pointer;
+        user-select: none;
+        transition: transform 0.12s ease, filter 0.12s ease;
+    }
+
+        .memory-card:hover {
+            filter: brightness(1.05);
+        }
+
+        .memory-card:active {
+            transform: scale(0.95);
+        }
+
+    .card-image {
+        width: 100%;
+        height: 100%;
+        display: block;
+        margin: 5px;
+        object-fit: cover;
+        box-sizing: border-box;
+    }
+
+    .card-back {
+        object-fit: cover;
+    }
+
+    .card-front {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        border: none;
+    }
+
+    .card-face {
+        object-fit: contain;
+    }
+
+    /* 
+     * Statistics
+     */
+
+    .statistics-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: min(100% - 100px, 500px);
+        z-index: 2;
+    }
+
+    .victory-text {
+        display: block;
+        margin-bottom: 10px;
+        font-family: Gwenchana, sans-serif;
+        font-size: 24px;
+        color: saddlebrown;
+        text-align: center;
+    }
+
+    .statistics-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        row-gap: 10px;
+    }
+
+    .statistic-label,
+    .statistic-value {
+        font-family: Gwenchana, sans-serif;
+        font-size: 24px;
+        color: saddlebrown;
+        line-height: 1.2;
+    }
+
+    .statistic-left {
+        text-align: left;
+    }
+
+    .statistic-right {
+        text-align: right;
+        padding-right: 25px;
+    }
+
+    .statistic-center {
+        grid-column: 1 / -1;
+        text-align: center;
+    }
+
+    /* 
+     * Bottom actions
+     */
+
+    .game-actions {
+        position: absolute;
+        bottom: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: grid;
+        grid-template-columns: 110px 120px;
+        gap: 20px;
+        z-index: 3;
+    }
+
+    .game-action-button {
+        width: 110px;
+        height: 50px;
+        min-height: 50px;
+        padding: 0;
+        border-radius: 25px;
+        background-color: burlywood;
+        color: saddlebrown;
+        font-family: Gwenchana, sans-serif;
+        font-size: 22px;
+        box-shadow: 2px 2px 2px rgba(139, 69, 19, 0.8);
+        text-shadow: 2px 2px 2px rgba(250, 250, 210, 0.8);
+    }
+
+    .game-action-repeat {
+        width: 120px;
+    }
+
+    /* 
+     * Responsive
+     */
+
+    @@media (max-width: 600px) {
+
+        .game-header-score,
+        .game-header-moves,
+        .game-header-time {
+            font-size: 36px;
+        }
+
+        .game-board {
+            grid-template-columns: repeat(var(--columns), minmax(45px, 70px));
+            gap: 6px;
+        }
+
+        .memory-card {
+            width: 100%;
+            height: 80px;
+        }
+
+        .statistics-container {
+            width: calc(100% - 60px);
+        }
+
+        .statistic-label,
+        .statistic-value {
+            font-size: 20px;
+        }
+    }
+
+</style>

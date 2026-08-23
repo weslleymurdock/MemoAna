@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace MemoAna
+namespace MemoAna.Platforms.MacCatalyst
 {
     public class Program
     {

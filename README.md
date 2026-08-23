@@ -1,6 +1,4 @@
-# 🆕 My Project
-
-## ❓ What is My Project?
+# 🎲 MemoAna - A simple memory card game
 
 ## ⚡ Getting Started
 
