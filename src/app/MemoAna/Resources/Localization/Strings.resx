@@ -152,5 +152,17 @@
   <data name="ThemeSelection" xml:space="preserve">
     <value>Selecione o Tema</value>
     <comment>Seleção de tema</comment>
+  </data>  
+  <data name="Music" xml:space="preserve">
+    <value>Musica: {0}</value>
+    <comment>Musica Ligado/Desligado</comment>
+  </data>
+  <data name="Sfx" xml:space="preserve">
+    <value>Efeitos: {0}</value>
+    <comment>Efeitos sonoros: ligado/desligado</comment>
+  </data>
+  <data name="Cloud" xml:space="preserve">
+    <value>Sincronizar: {0}</value>
+    <comment>Salvar na nuvem: Sim/Nao</comment>
   </data>
 </root>
