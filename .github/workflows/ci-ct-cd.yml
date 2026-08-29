@@ -11,7 +11,7 @@ permissions:
   contents: write 
   
 jobs:
-  backend-integration-test:
+  backend:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout 
@@ -21,15 +21,15 @@ jobs:
       uses: actions/setup-dotnet@v6
       with:
         dotnet-version: '10.0.x' 
-    
-    - name: Build
-      run: dotnet build ./src/web/MemoAna.Backend/MemoAna.Backend.csproj -c Release 
-
-    - name: Test
-      run: dotnet test ./tests/web/MemoAna.Backend.UnitTests/MemoAna.Backend.UnitTests.csproj -c Release 
 
     - name: Install ReportGenerator
       run: dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.5.11
+    
+    - name: Build
+      run: dotnet build ./MemoAna.Backend.slnx -c Release 
+
+    - name: Test
+      run: dotnet test ./tests/web/MemoAna.Backend.UnitTests/MemoAna.Backend.UnitTests.csproj -c Release --no-build 
 
     - name: Test with Coverlet
       id: test

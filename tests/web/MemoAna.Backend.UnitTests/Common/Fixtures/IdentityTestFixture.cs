@@ -21,7 +21,7 @@ public sealed class IdentityTestFixture : IDisposable
         ServiceCollection services = new();
         services.AddLogging();
         services.AddHttpContextAccessor();
-        services.AddDbContext<MemoAna.BackendDbContext>(options =>
+        services.AddDbContext<MemoAnaDbContext>(options =>
             options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddIdentityCore<User>(options =>
         {
@@ -32,7 +32,7 @@ public sealed class IdentityTestFixture : IDisposable
             options.Password.RequiredLength = 4;
             options.SignIn.RequireConfirmedEmail = false;
         }).AddRoles<Role>()
-        .AddEntityFrameworkStores<MemoAna.BackendDbContext>()
+        .AddEntityFrameworkStores<MemoAnaDbContext>()
         .AddSignInManager();
         services.AddScoped<IIdentityEmailSender,
             TestIdentityEmailSender>();
@@ -58,8 +58,8 @@ public sealed class IdentityTestFixture : IDisposable
         provider.GetRequiredService<IdentityService>();
 
     /// <summary>Gets the database context.</summary>
-    public MemoAna.BackendDbContext DbContext =>
-        provider.GetRequiredService<MemoAna.BackendDbContext>();
+    public MemoAnaDbContext DbContext =>
+        provider.GetRequiredService<MemoAnaDbContext>();
 
     /// <summary>Gets the user manager.</summary>
     public UserManager<User> UserManager =>

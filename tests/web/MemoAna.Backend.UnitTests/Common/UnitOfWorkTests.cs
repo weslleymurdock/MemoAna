@@ -15,11 +15,11 @@ public sealed class UnitOfWorkTests
         await using SqliteConnection connection =
             new("Data Source=:memory:");
         await connection.OpenAsync(TestContext.Current.CancellationToken);
-        DbContextOptions<MemoAna.BackendDbContext> options =
-            new DbContextOptionsBuilder<MemoAna.BackendDbContext>()
+        DbContextOptions<MemoAnaDbContext> options =
+            new DbContextOptionsBuilder<MemoAnaDbContext>()
                 .UseSqlite(connection)
                 .Options;
-        await using MemoAna.BackendDbContext context =
+        await using MemoAnaDbContext context =
             new(options);
         await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
         await using UnitOfWork unitOfWork =
@@ -49,11 +49,11 @@ public sealed class UnitOfWorkTests
         await using SqliteConnection connection =
             new("Data Source=:memory:");
         await connection.OpenAsync(TestContext.Current.CancellationToken);
-        DbContextOptions<MemoAna.BackendDbContext> options =
-            new DbContextOptionsBuilder<MemoAna.BackendDbContext>()
+        DbContextOptions<MemoAnaDbContext> options =
+            new DbContextOptionsBuilder<MemoAnaDbContext>()
                 .UseSqlite(connection)
                 .Options;
-        await using MemoAna.BackendDbContext context =
+        await using MemoAnaDbContext context =
             new(options);
         await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
         await using UnitOfWork unitOfWork =
@@ -73,11 +73,11 @@ public sealed class UnitOfWorkTests
         await using SqliteConnection connection =
             new("Data Source=:memory:");
         await connection.OpenAsync(TestContext.Current.CancellationToken);
-        DbContextOptions<MemoAna.BackendDbContext> options =
-            new DbContextOptionsBuilder<MemoAna.BackendDbContext>()
+        DbContextOptions<MemoAnaDbContext> options =
+            new DbContextOptionsBuilder<MemoAnaDbContext>()
                 .UseSqlite(connection)
                 .Options;
-        await using MemoAna.BackendDbContext context =
+        await using MemoAnaDbContext context =
             new(options);
         await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
         UnitOfWork unitOfWork = new(context);

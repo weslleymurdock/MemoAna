@@ -95,8 +95,8 @@ public sealed class MemoAnaBackendTestFixture : IDisposable
     public IUnitOfWork UnitOfWork => _provider.GetRequiredService<IUnitOfWork>();
 
     /// <summary>Gets the fake SignalR boundary used by dispatch tests.</summary>
-    public FakeSignalRService FSignalR =>
-        _provider.GetRequiredService<FakeSignalRService>();
+    // public FakeSignalRService FSignalR =>
+    //     _provider.GetRequiredService<FakeSignalRService>();
 
     /// <summary>Gets the concrete SignalR service used by implementation tests.</summary>
     //public SignalRService SignalR => _provider.GetRequiredService<SignalRService>();
