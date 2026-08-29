@@ -25,19 +25,19 @@
                 <MudToggleItem T="string"
                                Class="selection-button"
                                SelectedIcon="@Icons.Material.TwoTone.Check"
-                               Value="0">
+                               Value="@("0")">
                     @Localizer["Starter"]
                 </MudToggleItem>
                 <MudToggleItem T="string"
                                Class="selection-button"
                                SelectedIcon="@Icons.Material.TwoTone.Check"
-                               Value="1">
+                               Value="@("1")">
                     @Localizer["Medium"]
                 </MudToggleItem>
                 <MudToggleItem T="string"
                                Class="selection-button"
                                SelectedIcon="@Icons.Material.TwoTone.Check"
-                               Value="2">
+                               Value="@("2")">
                     @Localizer["Hard"]
                 </MudToggleItem>
             </MudToggleGroup>
@@ -55,21 +55,30 @@
                             Color="Color.Surface">
                 <MudToggleItem T="string"
                                Class="selection-button"
-                               SelectedIcon="@Icons.Material.TwoTone.Check"
-                               Value="0">
-                    @Localizer["IA"]
+                               SelectedIcon="@Icons.Material.Filled.Computer"
+                               UnselectedIcon="@Icons.Material.TwoTone.Computer"
+                               Value="@("0")">
+                    <MudText Align="Align.Center" Typo="Typo.caption">
+                        @Localizer["IA"]
+                    </MudText>
                 </MudToggleItem>
                 <MudToggleItem T="string"
                                Class="selection-button"
-                               SelectedIcon="@Icons.Material.TwoTone.Check"
-                               Value="1">
-                    @Localizer["Time"]
+                               SelectedIcon="@Icons.Material.Filled.Timer"
+                               UnselectedIcon="@Icons.Material.TwoTone.Timer"
+                               Value="@("1")">
+                    <MudText Align="Align.Center" Typo="Typo.caption">
+                        @Localizer["TimeAttack"]
+                    </MudText>  
                 </MudToggleItem>
                 <MudToggleItem T="string"
                                Class="selection-button"
-                               SelectedIcon="@Icons.Material.TwoTone.Check"
-                               Value="2">
-                    @Localizer["PVP"]
+                               SelectedIcon="@Icons.Material.Filled.PersonAdd"
+                               UnselectedIcon="@Icons.Material.TwoTone.PersonAdd"
+                               Value="@("2")">
+                    <MudText Align="Align.Center" Typo="Typo.caption">
+                        @Localizer["PVP"]
+                    </MudText>
                 </MudToggleItem>
             </MudToggleGroup>
         </div>
@@ -82,9 +91,7 @@
             @if (Themes.Count == 0)
             {
                 <div class="theme-loading">
-                    <MudProgressCircular Indeterminate="true"
-                                         Color="Color.Surface"
-                                         Size="Size.Large" />
+                    <MudProgressCircular Indeterminate="true" Color="Color.Surface"  Size="Size.Large" />
                 </div>
             }
             else
@@ -100,17 +107,13 @@
                              BulletsColor="Color.Surface"
                              ArrowsColor="Color.Surface">
                     <ItemTemplate Context="theme">
-                        <div class="theme-item"
-                             @onclick="@(() => SelectThemeAsync(theme))">
-                            <div class="theme-preview @(IsSelected(theme) ? "theme-preview-selected" : string.Empty)">
-                                <img src="@GetThemeImage(theme)"
-                                     class="theme-image"
-                                     alt="@theme.ThemeName" />
+                        <div class="mud-card theme-item mt-8" >
+                            <div class="mud-card-header">
+                                <MudText Class="theme-name">@theme.ThemeName</MudText>
                             </div>
-
-                            <MudText Class="theme-name">
-                                @theme.ThemeName
-                            </MudText>
+                            <MudIconButton Class="@("mud-card-content theme-preview " + (IsSelected(theme) ? "theme-preview-selected" : ""))"  OnClick="() => SelectThemeAsync(theme)">
+                                <MudImage Src="@GetThemeImage(theme)" Class="theme-image" Alt="@theme.ThemeName" />
+                            </MudIconButton>
                         </div>
                     </ItemTemplate>
                 </MudCarousel>
@@ -143,8 +146,7 @@ else
             <div class="game-board" style="--columns: @Columns">
                 @foreach (KeyValuePair<int, MemoryCard> card in Cards)
                 {
-                    <div class="memory-card"
-                         @onclick="() => FlipCard(card.Key, card.Value)">
+                    <div class="memory-card" @onclick="() => FlipCard(card.Key, card.Value)">
                         @if (!card.Value.IsFaceUp)
                         {
                             <img src="images/back.png" class="card-image card-back" alt="" />
@@ -226,10 +228,10 @@ else
     private async Task SelectThemeAsync(CardThemeManifestDto theme)
     {
         SelectedTheme = theme;
+        await InvokeAsync(StateHasChanged);
 
         if (string.IsNullOrWhiteSpace(Difficulty))
         {
-            await InvokeAsync(StateHasChanged);
             return;
         }
 
@@ -530,7 +532,7 @@ else
         left: 0;
         right: 0;
         bottom: 20px;
-        height: calc(100vh - 430px);
+        height: calc(100vh - 400px);
         min-height: 270px;
         display: flex;
         flex-direction: column;
@@ -568,6 +570,7 @@ else
         justify-content: center;
         gap: 20px;
         margin: auto;
+        padding-top: 10%;
         cursor: pointer;
         user-select: none;
     }
