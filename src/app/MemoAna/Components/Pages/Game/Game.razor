@@ -1,0 +1,310 @@
+@page "/game"
+@using Microsoft.AspNetCore.Components
+@implements IAsyncDisposable
+@inject ILogger<Game> logger
+@inject IThemeService themeService
+
+<div class="game-page">
+    <img src="images/empty.png" class="game-background" alt="" />
+
+    @if (IsBusy)
+    {
+        <div class="loading-container">
+            <MudProgressCircular Indeterminate="true"
+                                 Size="Size.Large"
+                                 Color="Color.Warning" />
+            <MudText Class="loading-text">Preparando Tabuleiro...</MudText>
+        </div>
+    }
+    else if (IsGameActive)
+    {
+        <div class="game-header">
+            <MudText Class="game-header-score">@CurrentScore</MudText>
+            <MudText Class="game-header-moves">@MovesCount</MudText>
+            <MudText Class="game-header-time">@GameTime</MudText>
+        </div>
+
+        <div class="game-board" style="--columns: @Columns">
+            @foreach (var card in Cards)
+            {
+                <div class="memory-card" @onclick="() => FlipCard(card.Key, card.Value)">
+                    @if (!card.Value.IsFaceUp)
+                    {
+                        <img src="images/back.png" class="card-image card-back" alt="" />
+                    }
+                    else
+                    {
+                        <img src="@card.Value.CardImage" class="card-image card-face" alt="" />
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="statistics-container">
+            <MudText Class="victory-text">@IsVictory</MudText>
+            <div class="statistics-grid">
+                <MudText Class="statistic-value statistic-left">@Statistics.ThemeName</MudText>
+                <MudText Class="statistic-value statistic-right">@Statistics.Difficulty</MudText>
+                <MudText Class="statistic-value statistic-center">@Statistics.PlayedAt</MudText>
+                <MudText Class="statistic-label">ACERTOS</MudText>
+                <MudText Class="statistic-value statistic-right">@Statistics.SuccessfulMoves</MudText>
+                <MudText Class="statistic-label">ERROS</MudText>
+                <MudText Class="statistic-value statistic-right">@Statistics.Mistakes</MudText>
+                <MudText Class="statistic-label">SOMA</MudText>
+                <MudText Class="statistic-value statistic-right">@Statistics.TotalMoves</MudText>
+                <MudText Class="statistic-label">PONTOS</MudText>
+                <MudText Class="statistic-value statistic-right">@CurrentScore</MudText>
+                <MudText Class="statistic-label">TOTAL</MudText>
+                <MudText Class="statistic-value statistic-right">@Statistics.FinalScore</MudText>
+            </div>
+        </div>
+
+        <div class="game-actions">
+            <MudButton Class="game-action-button" OnClick="GoToMain">INICIO</MudButton>
+            <MudButton Class="game-action-button game-action-repeat" OnClick="RestartGame">REPETIR</MudButton>
+        </div>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "Theme")]
+    public string? ThemeParameter { get; set; }
+
+    [SupplyParameterFromQuery(Name = "Difficulty")]
+    public string? Difficulty { get; set; }
+
+    private bool IsBusy { get; set; }
+    private string Theme { get; set; } = string.Empty;
+    private string GameTime { get; set; } = "00:00";
+    private string CurrentScore { get; set; } = "000";
+    private string MovesCount { get; set; } = "0";
+    private int Rows { get; set; } = 3;
+    private int Columns { get; set; } = 4;
+    private bool IsGameActive { get; set; }
+    private string IsVictory { get; set; } = string.Empty;
+    private GameStatisticsDto Statistics { get; set; } = GameStatisticsDto.Default;
+    private ObservableCollection<KeyValuePair<int, MemoryCard>> Cards { get; } = [];
+    private bool _isInitializing;
+    private bool _eventsAttached;
+
+    protected override void OnInitialized()
+    {
+        logger.LogInformation("Entering Game...");
+        base.OnInitialized();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_isInitializing)
+            return;
+
+        if (string.IsNullOrWhiteSpace(ThemeParameter) || !int.TryParse(Difficulty, out _))
+        {
+            logger.LogWarning("Game route parameters are invalid. Theme: {Theme}, Difficulty: {Difficulty}", ThemeParameter, Difficulty);
+            return;
+        }
+
+        _isInitializing = true;
+
+        try
+        {
+            await InitializeGameAsync();
+        }
+        finally
+        {
+            _isInitializing = false;
+        }
+    }
+
+    private async Task InitializeGameAsync()
+    {
+        IsBusy = true;
+        IsGameActive = false;
+        IsVictory = string.Empty;
+        Statistics = GameStatisticsDto.Default;
+        Cards.Clear();
+
+        try
+        {
+            int level = int.Parse(Difficulty!);
+            ConfigureGridGeometry(level);
+
+            // GameSelection currently sends CardThemeId. GameService resolves themes by ThemeName,
+            // so normalize the route value here. ThemeName is also accepted for compatibility.
+            IReadOnlyCollection<CardThemeManifestDto> themes = await themeService.GetThemesAsync();
+            CardThemeManifestDto? selectedTheme = themes.FirstOrDefault(x =>
+                string.Equals(x.CardThemeId, ThemeParameter, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(x.ThemeName, ThemeParameter, StringComparison.OrdinalIgnoreCase));
+
+            if (selectedTheme is null)
+                throw new KeyNotFoundException($"Theme '{ThemeParameter}' was not found.");
+
+            Theme = selectedTheme.ThemeName;
+
+            AttachGameEvents();
+
+            await game.StartGameAsync(level, Theme);
+
+            foreach (KeyValuePair<int, MemoryCard> card in game.CurrentCards)
+                Cards.Add(card);
+
+            int remainingTime = level switch
+            {
+                0 => 75,
+                1 => 100,
+                2 => 120,
+                _ => 75
+            };
+
+            GameTime = TimeSpan.FromSeconds(remainingTime).ToString(@"mm\:ss");
+            CurrentScore = game.CurrentScore.ToString("D3");
+            MovesCount = game.TotalMoves.ToString();
+            IsGameActive = true;
+
+            await audio.StopAsync();
+            await audio.PlayMainGameAsync();
+
+            logger.LogInformation("Game initialized. Theme: {Theme}, Difficulty: {Difficulty}, Cards: {CardCount}", Theme, level, Cards.Count);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error initializing game. Theme: {Theme}, Difficulty: {Difficulty}", ThemeParameter, Difficulty);
+            IsGameActive = false;
+        }
+        finally
+        {
+            IsBusy = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void AttachGameEvents()
+    {
+        if (_eventsAttached)
+            return;
+
+        game.GameFinished += OnGameFinished;
+        game.TimerTick += OnTimerTick;
+        game.CardFlipped += OnCardFlipped;
+        _eventsAttached = true;
+    }
+
+    private async Task FlipCard(int position, MemoryCard card)
+    {
+        if (IsBusy || !IsGameActive || card.IsFaceUp || card.IsMatched)
+            return;
+
+        IsBusy = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            await game.FlipCardAsync(position, card);
+            MovesCount = game.TotalMoves.ToString();
+            CurrentScore = game.CurrentScore.ToString("D3");
+        }
+        finally
+        {
+            IsBusy = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void OnTimerTick(object? sender, GameTickEventArgs gameTick)
+    {
+        _ = InvokeAsync(() =>
+        {
+            GameTime = gameTick.NextTime;
+            CurrentScore = game.CurrentScore.ToString("D3");
+            StateHasChanged();
+        });
+    }
+
+    private void OnGameFinished(object? sender, GameStatisticsEventArgs e)
+    {
+        _ = InvokeAsync(async () =>
+        {
+            IsGameActive = false;
+            Statistics = new GameStatisticsDto(
+                e.ThemeName,
+                e.Difficulty,
+                e.PlayedAt,
+                e.IsVictory,
+                e.RemainingSeconds,
+                e.TotalMoves,
+                e.SuccessfulMoves,
+                e.Mistakes,
+                e.FinalScore);
+            IsVictory = e.IsVictory ? "+1 CONQUISTA!" : "DERROTA!";
+            CurrentScore = e.FinalScore.ToString("D3");
+            await audio.StopAsync();
+            StateHasChanged();
+        });
+    }
+
+    private void OnCardFlipped(object? sender, GameCardFlippedEventArgs e)
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ConfigureGridGeometry(int difficulty)
+    {
+        (Rows, Columns) = difficulty switch
+        {
+            0 => (4, 3),
+            1 => (5, 4),
+            2 => (6, 5),
+            _ => (4, 3)
+        };
+    }
+
+    private void GoToMain() => navigation.NavigateTo("/");
+
+    private void RestartGame() => navigation.NavigateTo("/selection");
+
+    private async Task CleanupGame()
+    {
+        if (_eventsAttached)
+        {
+            game.GameFinished -= OnGameFinished;
+            game.TimerTick -= OnTimerTick;
+            game.CardFlipped -= OnCardFlipped;
+            _eventsAttached = false;
+        }
+
+        if (game is GameService service)
+            service.ForceStopTimer();
+
+        IsGameActive = false;
+        await audio.StopAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CleanupGame();
+    }
+}
+
+<style>
+    .game-page { position: relative; width: 100%; height: 100vh; overflow: hidden; }
+    .game-background { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; z-index: 0; pointer-events: none; user-select: none; }
+    .loading-container { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; z-index: 10; }
+    .loading-text { font-family: Bangpop; font-size: 20px; color: saddlebrown; text-shadow: 2px 2px 1px rgba(250,250,210,.9); }
+    .game-header { position: absolute; top: 40px; left: 20px; right: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; z-index: 2; }
+    .game-header-score, .game-header-moves, .game-header-time { font-family: Bangpop; font-size: 48px; color: lightgoldenrodyellow; line-height: 1; }
+    .game-header-score { text-align: left; } .game-header-moves { text-align: center; } .game-header-time { text-align: right; }
+    .game-board { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); display: grid; grid-template-columns: repeat(var(--columns),70px); gap: 10px; z-index: 2; }
+    .memory-card { width: 70px; height: 90px; cursor: pointer; user-select: none; transition: transform .12s ease, filter .12s ease; }
+    .memory-card:hover { filter: brightness(1.05); } .memory-card:active { transform: scale(.95); }
+    .card-image { width: 100%; height: 100%; display: block; object-fit: cover; box-sizing: border-box; }
+    .card-face { object-fit: contain; } .card-back { object-fit: cover; }
+    .statistics-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 2; min-width: 300px; text-align: center; }
+    .victory-text { font-family: Bangpop; font-size: 36px; color: saddlebrown; text-shadow: 2px 2px 1px lightgoldenrodyellow; }
+    .statistics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; margin-top: 25px; }
+    .statistic-label, .statistic-value { font-family: Bangpop; color: saddlebrown; font-size: 20px; }
+    .statistic-left { text-align: left; } .statistic-right { text-align: right; } .statistic-center { grid-column: 1 / -1; text-align: center; }
+    .game-actions { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; gap: 25px; z-index: 3; }
+    .game-action-button { min-width: 140px; background-color: burlywood; color: saddlebrown; font-family: Bangpop; box-shadow: 4px 4px 2px rgba(139,69,19,.8); }
+</style>
