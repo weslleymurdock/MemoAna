@@ -61,77 +61,16 @@
     <MauiImage Include="Resources\Images\*" />
     <MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
 
-    <!-- Custom Fonts -->
-    <MauiFont Include="Resources\Fonts\*" />
+    <!-- Custom Fonts --> 
+    <MauiFont Include="Resources\Fonts\Gwenchana\Gwenchana.ttf" />
+    <MauiFont Include="Resources\Fonts\Bangpop\Bangpop.ttf" />
+    <MauiFont Include="wwwroot\fonts\Gwenchana.ttf" />
+    <MauiFont Include="wwwroot\fonts\Bangpop.ttf" />
+    <!-- Embedded Resources -->
+    <EmbeddedResource Include="Resources\Seed\**\*.*" />
 
     <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <AndroidResource Remove="ViewModels\**" />
-    <Compile Remove="ViewModels\**" />
-    <Content Remove="ViewModels\**" />
-    <EmbeddedResource Remove="ViewModels\**" />
-    <MauiXaml Remove="ViewModels\**" />
-    <None Remove="ViewModels\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Remove="wwwroot\fonts\Gwenchana.ttf" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\Seed\disney\d01_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d02_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d03_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d04_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d05_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d06_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d07_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d08_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d09_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d10_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d11_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d12_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d13_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d14_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\disney\d15_disney.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m01_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m02_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m03_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m04_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m05_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m06_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m07_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m08_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m09_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m10_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m11_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m12_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m13_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m14_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\marvel\m15_marvel.jpg" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p01_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p02_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p03_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p04_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p05_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p06_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p07_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p08_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p09_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p10_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p11_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p12_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p13_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p14_pokemon.png" />
-    <EmbeddedResource Include="Resources\Seed\pokemon\p15_pokemon.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <MauiFont Include="Resources\Fonts\Gwenchana\Gwenchana.ttf" />
-    <MauiFont Include="wwwroot\fonts\Gwenchana.ttf" />
   </ItemGroup>
 
   <ItemGroup>

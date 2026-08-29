@@ -9,6 +9,7 @@
     <File Path="docs/project-architecture.md" />
   </Folder>
   <Folder Name="/MemoAna/scripts/">
+    <File Path="adb.ps1" />
     <File Path="scripts/gen-cert.ps1" />
     <File Path="scripts/migrate.ps1" />
     <File Path="scripts/postgres.ps1" />
@@ -24,5 +25,6 @@
       <Deploy Solution="Debug|*" />
     </Project>
   </Folder>
+  <Folder Name="/MemoAna/tests/" />
   <Folder Name="/MemoAna/tests/app/" />
 </Solution>

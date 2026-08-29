@@ -43,10 +43,11 @@
     @if (IsGameActive)
     {
         <div class="game-board" style="--columns: @Columns">
+            @i = 0;
             @foreach (var card in Cards)
             {
-                <div class="memory-card" @onclick="() => FlipCard(card)">
-                    @if (!card.IsFaceUp)
+                <div class="memory-card" @onclick="() => FlipCard(i+=1, card.Value)">
+                    @if (!card.Value.IsFaceUp)
                     {
                         <img src="images/back.png"
                              class="card-image card-back"
@@ -55,7 +56,7 @@
                     else
                     {
                         <div class="card-front">
-                            <img src="@card.CardImage" class="card-image card-face" alt="" />
+                            <img src="@card.Value.CardImage" class="card-image card-face" alt="" />
                         </div>
                     }
                 </div>
@@ -136,7 +137,7 @@
 
     [SupplyParameterFromQuery(Name = "Difficulty")]
     public string? Difficulty { get; set; }
-
+    public int i = 0;
     bool IsBusy { get; set; } = false;
     string Theme { get; set; } = string.Empty;
     string GameTime { get; set; } = "00:00";
@@ -148,15 +149,27 @@
     bool GameEnded { get; set; } = false;
     string IsVictory { get; set; } = string.Empty;
     GameStatisticsDto Statistics { get; set; } = GameStatisticsDto.Default;
-    ObservableCollection<MemoryCard> Cards { get; set; } = [];
+    ObservableCollection<KeyValuePair<int, MemoryCard>> Cards { get; set; } = [];
     private string _lastTimeStr = string.Empty;
     private string _lastScoreStr = string.Empty;
-    private bool _isinitializing = false;
+    private bool _isInitializing = false;
 
     protected override void OnInitialized()
     {
         logger.LogInformation("Entering Game...");
         base.OnInitialized();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_isInitializing) return;
+
+        if (!string.IsNullOrEmpty(Theme) && !string.IsNullOrEmpty(Difficulty))
+        {
+            _isInitializing = true;
+            await InitializeGameAsync();
+            _isInitializing = false;
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -166,7 +179,7 @@
         await base.OnAfterRenderAsync(firstRender);
     }
 
-    private async Task FlipCard(MemoryCard card)
+    private async Task FlipCard(int position, MemoryCard card)
     {
         if (IsBusy) return;
 
@@ -174,7 +187,7 @@
 
         IsBusy = true;
 
-        await game.FlipCardAsync(card);
+        await game.FlipCardAsync(position, card);
 
         MovesCount = game.TotalMoves.ToString();
 
@@ -202,13 +215,14 @@
             game.GameFinished += OnGameFinished;
             game.TimerTick -= OnTimerTick;
             game.TimerTick += OnTimerTick;
-
+            game.CardFlipped -= OnCardFlipped;
+            game.CardFlipped += OnCardFlipped;
             // Loads database and generates ImageSources in background
             await Task.Run(async () => await game.StartGameAsync(level, Theme));
 
             // Single safe UI update
-            if (game.CurrentCards is ObservableCollection<MemoryCard> cardsList)
-                foreach (MemoryCard card in cardsList)
+            if (game.CurrentCards is ObservableCollection<KeyValuePair<int,MemoryCard>> cardsList)
+                foreach (KeyValuePair<int, MemoryCard> card in cardsList)
                     Cards.Add(card);
 
             int remainingTime = level switch
@@ -241,10 +255,7 @@
 
     private void GoToMain() => navigation.NavigateTo("/");
 
-    private void RestartGame()
-    {
-        
-    }
+    private void RestartGame() => navigation.NavigateTo("/selection");
 
     /// <summary>
     /// Game timer tick event.
@@ -299,9 +310,17 @@
 
         game.GameFinished -= OnGameFinished;
         game.TimerTick -= OnTimerTick;
-
+        game.CardFlipped -= OnCardFlipped;
         IsGameActive = false;
         await audio.StopAsync();
+    }
+
+    private void OnCardFlipped(object? sender, GameCardFlippedEventArgs e)
+    {
+        
+        // TODO: at IIAService implementation, store the cards flipped (e.MemoryCard.Card)
+        // and position (e.MemoryCard.Position) to make IAService compute against 
+        // player, implementing the three levels of difficulty for ia skills 
     }
 
     private void ConfigureGridGeometry(int difficulty)
@@ -315,23 +334,7 @@
         };
     }
 
-    public async void ApplyQueryAttributes(IDictionary<string, object> query)
-    {
-        if (_isinitializing) return;
-
-        if (query.TryGetValue("Theme", out var themeValue))
-            Theme = themeValue?.ToString() ?? string.Empty;
-
-        if (query.TryGetValue("Difficulty", out var difficultyValue))
-            Difficulty = difficultyValue?.ToString() ?? string.Empty;
-
-        if (!string.IsNullOrEmpty(Theme) && !string.IsNullOrEmpty(Difficulty))
-        {
-            _isinitializing = true;
-            await InitializeGameAsync();
-            _isinitializing = false;
-        }
-    }
+ 
 
     public async ValueTask DisposeAsync()
     {
@@ -354,7 +357,7 @@
         inset: 0;
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: fill;
         z-index: 0;
         user-select: none;
         pointer-events: none;
@@ -379,7 +382,7 @@
     }
 
     .loading-text {
-        font-family: Gwenchana, sans-serif;
+        font-family: 'Bangpop';
         font-size: 20px;
         color: saddlebrown;
         text-shadow: 2px 2px 1px rgba(250, 250, 210, 0.9);
@@ -401,7 +404,7 @@
     .game-header-score,
     .game-header-moves,
     .game-header-time {
-        font-family: Gwenchana, sans-serif;
+        font-family: 'Bangpop';
         font-size: 48px;
         color: lightgoldenrodyellow;
         line-height: 1;
@@ -489,7 +492,7 @@
     .victory-text {
         display: block;
         margin-bottom: 10px;
-        font-family: Gwenchana, sans-serif;
+        font-family: 'Bangpop';
         font-size: 24px;
         color: saddlebrown;
         text-align: center;
@@ -503,7 +506,7 @@
 
     .statistic-label,
     .statistic-value {
-        font-family: Gwenchana, sans-serif;
+        font-family: 'Bangpop';
         font-size: 24px;
         color: saddlebrown;
         line-height: 1.2;
@@ -546,7 +549,7 @@
         border-radius: 25px;
         background-color: burlywood;
         color: saddlebrown;
-        font-family: Gwenchana, sans-serif;
+        font-family: 'Bangpop';
         font-size: 22px;
         box-shadow: 2px 2px 2px rgba(139, 69, 19, 0.8);
         text-shadow: 2px 2px 2px rgba(250, 250, 210, 0.8);
@@ -587,5 +590,10 @@
             font-size: 20px;
         }
     }
-
+    @@font-face {
+        font-family: 'Bangpop';
+        src: url('/fonts/Bangpop.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+    }
 </style>

@@ -41,24 +41,24 @@ public static class MauiAppBuilderExtensions
         
         private MauiAppBuilder AddApplication()
         {
+            builder.Services.AddSingleton<IGameService, GameService>();
             builder.Services.AddScoped<IImageConverterService, ImageConverterService>();
-            builder.Services.AddScoped<IGameService, GameService>();
-            builder.Services.AddScoped<IThemeService, ThemeService>();
             builder.Services.AddScoped<MemoryCard>();
             return builder;
         }
 
         private  MauiAppBuilder AddInfrastructure()
         {
+            builder.AddSqlite();
             builder.Services.AddScoped<IAudioService, AudioService>();
             builder.Services.AddScoped<ISettingsService, SettingsService>();
+            builder.Services.AddScoped<IThemeService, ThemeService>();
             builder.Services.AddSingleton<HttpClient>();
             builder.Services.AddSingleton(AudioManager.Current);
-            builder.AddSqlite();
             return builder;
         }
 
-        private  MauiAppBuilder AddPresentation(Action<MauiAppBuilder> configure)
+        private MauiAppBuilder AddPresentation(Action<MauiAppBuilder> configure)
         {
             builder.Services.AddSingleton(sp
                 => Microsoft.Maui.Controls.Application.Current?.Dispatcher
@@ -90,7 +90,6 @@ public static class MauiAppBuilderExtensions
             MauiApp app = builder.Build();
             using var scope = app.Services.CreateScope();
             GameDbContext context = scope.ServiceProvider.GetRequiredService<GameDbContext>();
-
             try
             {
                 if (context.Database.GetPendingMigrations().Any())

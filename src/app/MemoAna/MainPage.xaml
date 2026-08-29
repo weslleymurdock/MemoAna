@@ -3,11 +3,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:MemoAna"
              xmlns:components="clr-namespace:MemoAna.Components"
-             x:Class="MemoAna.MainPage">
+             x:Class="MemoAna.MainPage"
+            Shell.FlyoutItemIsVisible="false"
+            Shell.FlyoutBehavior="Disabled">
 
-   <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
+   <BlazorWebView x:Name="blazorWebView" 
+                    HostPage="wwwroot/index.html" 
+                    HorizontalOptions="Fill" 
+                    VerticalOptions="Fill">
        <BlazorWebView.RootComponents>
-           <RootComponent Selector="#app" ComponentType="{x:Type components:Routes}" />
+           <RootComponent Selector="#app" ComponentType="{x:Type components:Routes}"  />
        </BlazorWebView.RootComponents>
    </BlazorWebView>
 

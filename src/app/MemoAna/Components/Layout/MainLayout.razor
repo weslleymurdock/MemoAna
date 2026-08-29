@@ -1,26 +1,9 @@
 ﻿@inherits LayoutComponentBase
 
-@* Required *@
 <MudThemeProvider />
-<MudPopoverProvider />
-
-@* Needed for dialogs *@
 <MudDialogProvider />
-
-@* Needed for snackbars *@
+<MudPopoverProvider />
 <MudSnackbarProvider />
 
-<MudLayout>
-    <MudMainContent>
-        @Body
-    </MudMainContent>
-</MudLayout>
+<MudLayout>@Body</MudLayout>
 
-@code {
-    bool _drawerOpen = true;
-
-    void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-}

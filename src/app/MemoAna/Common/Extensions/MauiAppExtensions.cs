@@ -78,7 +78,15 @@ internal static class MauiAppExtensions
                     });
                     context.SaveChanges();
                 }
-                if (context.CardThemeManifests.Any(ct => ct.IsDefault && (ct.ThemeName.ToLower() == "disney" || ct.ThemeName.ToLower() == "marvel" || ct.ThemeName.ToLower() == "pokemon")))
+                var defaultThemes = new[] { "disney", "marvel", "pokemon", "cars" };
+
+                var existingThemesCount = context.CardThemeManifests
+                    .Where(ct => defaultThemes.Contains(ct.ThemeName.ToLower()))
+                    .Select(ct => ct.ThemeName.ToLower())
+                    .Distinct()
+                    .Count();
+
+                if (existingThemesCount == defaultThemes.Length)
                 {
                     return app;
                 }
@@ -86,18 +94,46 @@ internal static class MauiAppExtensions
                 var assembly = Assembly.GetExecutingAssembly();
                 var resourceNames = assembly.GetManifestResourceNames();
 
+                var existingThemes = context.CardThemeManifests
+                    .Select(ct => ct.ThemeName.ToLower())
+                    .ToList();
+
+                var pixarResources = resourceNames.Where(name => name.Contains("carros") && name.EndsWith(".png", StringComparison.OrdinalIgnoreCase)).ToList();
                 var disneyResources = resourceNames.Where(name => name.Contains("disney") && name.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)).ToList();
                 var marvelResources = resourceNames.Where(name => name.Contains("marvel") && name.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)).ToList();
                 var pokemonResources = resourceNames.Where(name => name.Contains("pokemon") && name.EndsWith(".png", StringComparison.OrdinalIgnoreCase)).ToList();
 
-                if (!(marvelResources.Any(x => x is not null) || disneyResources.Any(x => x is not null) || pokemonResources.Any(x => x is not null))) return app;
+                var hasChanges = false;
 
-                // Processa os dados e gera os Manifests emparelhados com os Payloads
-                ProcessAndAddTheme(context, assembly, "Disney", disneyResources, "jpeg");
-                ProcessAndAddTheme(context, assembly, "Marvel", marvelResources, "jpeg");
-                ProcessAndAddTheme(context, assembly, "Pokemon", pokemonResources, "png");
+                if (!existingThemes.Contains("cars") && pixarResources.Any())
+                {
+                    ProcessAndAddTheme(context, assembly, "Cars", pixarResources, "png");
+                    hasChanges = true;
+                }
 
-                context.SaveChanges();
+                if (!existingThemes.Contains("disney") && disneyResources.Any())
+                {
+                    ProcessAndAddTheme(context, assembly, "Disney", disneyResources, "jpeg");
+                    hasChanges = true;
+                }
+
+                if (!existingThemes.Contains("marvel") && marvelResources.Any())
+                {
+                    ProcessAndAddTheme(context, assembly, "Marvel", marvelResources, "jpeg");
+                    hasChanges = true;
+                }
+
+                if (!existingThemes.Contains("pokemon") && pokemonResources.Any())
+                {
+                    ProcessAndAddTheme(context, assembly, "Pokemon", pokemonResources, "png");
+                    hasChanges = true;
+                }
+
+                if (hasChanges)
+                {
+                    context.SaveChanges();
+                }
+
                 return app;
             }
             catch (Exception e)
@@ -123,7 +159,7 @@ internal static class MauiAppExtensions
             stream.CopyTo(ms);
             byte[] imageBytes = ms.ToArray();
 
-            string extension = resourceName.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ? "png" : defaultExt;
+            string extension = resourceName.EndsWith(".png") ? "png" : defaultExt;
             string base64String = $"data:image/{extension};base64,{Convert.ToBase64String(imageBytes)}";
 
             base64List.Add(base64String);
@@ -150,8 +186,16 @@ internal static class MauiAppExtensions
             Manifest = manifest,
             Id = themeId
         };
-
-        context.CardThemeManifests.Add(manifest);
-        context.CardThemes.Add(cardTheme);
+    
+        if (!context.CardThemeManifests.Any(x => x.ThemeName.ToLower().Equals(manifest.ThemeName.ToLower())))
+        {
+            context.CardThemeManifests.Add(manifest);
+        }
+    
+        if (!context.CardThemeManifests.Any(x => x.Id.ToLower().Equals(cardTheme.Id.ToLower())))
+        {
+            context.CardThemes.Add(cardTheme);
+        }  
+            
     }
 }

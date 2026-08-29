@@ -6,7 +6,6 @@ using MemoAna.Game.Dtos;
 using MemoAna.Game.Entities;
 using MemoAna.Game.Enums;
 using MemoAna.Game.EventArgs;
-using System.Collections.ObjectModel;
 
 namespace MemoAna.Game.Services;
 
@@ -31,12 +30,13 @@ public sealed class GameService : IGameService
     public int TotalMoves => _totalMoves;
     public int CurrentScore => _accumulatedScore;
 
-    public ObservableCollection<MemoryCard> CurrentCards { get; } = [];
+    public ObservableCollection<KeyValuePair<int, MemoryCard>> CurrentCards { get; } = [];
     public TimeSpan RemainingTime { get; private set; }
     public bool IsGameActive { get; private set; }
     
     public event EventHandler<GameStatisticsEventArgs>? GameFinished;
     public event EventHandler<GameTickEventArgs>? TimerTick;
+    public event EventHandler<GameCardFlippedEventArgs>? CardFlipped;
     public GameService(IRepository<CardThemeManifestEntity> manifestRepository, 
         IRepository<GameSettingsEntity> settingsRepository, 
         IRepository<GameStatisticsEntity> statisticsRepository, 
@@ -80,7 +80,6 @@ public sealed class GameService : IGameService
 
         gameSettings = GameSettingsDto.FromEntity((await settingsRepository.ListTrackedAsync(x => x != null, null!, CancellationToken.None))
                    .Single() ?? new());
-;
 
         CardThemeManifestEntity manifest = (await manifestRepository.ListTrackedAsync(m => m.ThemeName == theme, [x => x.CardTheme], CancellationToken.None)).Single() ?? throw new KeyNotFoundException("Manifesto do Tema não disponível");
 
@@ -100,26 +99,22 @@ public sealed class GameService : IGameService
         {
             if (string.IsNullOrEmpty(base64Str)) continue;
             pairIdFactory = Guid.CreateVersion7().ToString();
-            byte[] imageBytes = Convert.FromBase64String(base64Str.Split(',')[1]);
-
-            ImageSource sourceCardA = ImageSource.FromStream(() => new MemoryStream(imageBytes));
-            ImageSource sourceCardB = ImageSource.FromStream(() => new MemoryStream(imageBytes));
-
-            gameCards.Add(new MemoryCard { Id = idFactory++, PairId = pairIdFactory, CardImage = sourceCardA });
-            gameCards.Add(new MemoryCard { Id = idFactory++, PairId = pairIdFactory, CardImage = sourceCardB });
+            
+            gameCards.Add(new MemoryCard { Id = idFactory++, PairId = pairIdFactory, CardImage = base64Str });
+            gameCards.Add(new MemoryCard { Id = idFactory++, PairId = pairIdFactory, CardImage = base64Str });
         }
 
         var shuffledCards = gameCards.OrderBy(_ => random.Next()).ToList();
 
+        int i = 0;
         foreach (MemoryCard? card in shuffledCards)
-            CurrentCards.Add(card);
-
+            CurrentCards.Add(new KeyValuePair<int, MemoryCard>(i+=1, card));
         IsGameActive = true;
         RemainingTime = TimeSpan.FromSeconds(totalSeconds);
         _gameTimer.Start();
     }
  
-    public async Task FlipCardAsync(MemoryCard selectedCard)
+    public async Task FlipCardAsync(int position, MemoryCard selectedCard)
     {
         if (!IsGameActive || _isProcessingTurn || selectedCard.IsFaceUp || selectedCard.IsMatched)
             return;
@@ -128,10 +123,12 @@ public sealed class GameService : IGameService
 
         if (_firstSelectedCard == null)
         {
+            CardFlipped?.Invoke(this, new((position, selectedCard.CardImage)!));
             _firstSelectedCard = selectedCard;
             return;
         }
 
+        CardFlipped?.Invoke(this, new((position, selectedCard.CardImage)!));
         _secondSelectedCard = selectedCard;
         _isProcessingTurn = true;
         _totalMoves++;
@@ -173,7 +170,7 @@ public sealed class GameService : IGameService
      
     private void CheckWinCondition()
     {
-        if (CurrentCards.All(c => c.IsMatched))
+        if (CurrentCards.All(c => c.Value.IsMatched))
             EndGame(won: true);
     }
     
@@ -211,7 +208,7 @@ public sealed class GameService : IGameService
         }
         else
         {
-            int unmatchedCardsCount = CurrentCards.Count(c => !c.IsMatched);
+            int unmatchedCardsCount = CurrentCards.Count(c => !c.Value.IsMatched);
             finalScoreCalculated -= unmatchedCardsCount * 50;
             if (finalScoreCalculated < 0)
                 finalScoreCalculated = 0;

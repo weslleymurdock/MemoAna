@@ -6,7 +6,7 @@ public partial class MemoryCard : ObservableObject
 {
     public int Id { get; set; }
     public string PairId { get; set; } = string.Empty;
-    public ImageSource? CardImage { get; set; }
+    public string? CardImage { get; set; }
 
     [ObservableProperty]
     public partial bool IsFaceUp { get; set; }

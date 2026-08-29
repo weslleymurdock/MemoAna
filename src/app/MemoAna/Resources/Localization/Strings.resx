@@ -142,8 +142,8 @@
     <comment>Dificuldade iniciante</comment>
   </data>
   <data name="Medium" xml:space="preserve">
-    <value>MEDIANO</value>
-    <comment>Dificuldade mediana</comment>
+    <value>NORMAL</value>
+    <comment>Dificuldade normal</comment>
   </data>
   <data name="Hard" xml:space="preserve">
     <value>EXTREMA</value>
@@ -152,17 +152,25 @@
   <data name="ThemeSelection" xml:space="preserve">
     <value>Selecione o Tema</value>
     <comment>Seleção de tema</comment>
-  </data>  
+  </data>
   <data name="Music" xml:space="preserve">
-    <value>Musica: {0}</value>
+    <value>Musica: </value>
     <comment>Musica Ligado/Desligado</comment>
   </data>
   <data name="Sfx" xml:space="preserve">
-    <value>Efeitos: {0}</value>
+    <value>Efeitos: </value>
     <comment>Efeitos sonoros: ligado/desligado</comment>
   </data>
   <data name="Cloud" xml:space="preserve">
-    <value>Sincronizar: {0}</value>
-    <comment>Salvar na nuvem: Sim/Nao</comment>
+    <value>Sincronizar remoto </value>
+    <comment>Sincronizar remoto</comment>
+  </data>
+  <data name="ConfirmOnExit" xml:space="preserve">
+    <value>Confirmar Saida</value>
+    <comment>Opção confirmar saida do jogo</comment>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Voltar</value>
+    <comment>Botao voltar</comment>
   </data>
 </root>

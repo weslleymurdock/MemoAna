@@ -129,4 +129,10 @@
   <data name="Play" xml:space="preserve">
     <value>Jogar</value>
   </data>
+  <data name="Cloud" xml:space="preserve">
+    <value>Sincronizar remoto</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Voltar</value>
+  </data>
 </root>
