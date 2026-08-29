@@ -23,7 +23,7 @@ public sealed class ConfiguredIdentityTestFixture : IDisposable
         services.AddLogging();
         services.AddHttpContextAccessor();
         services.AddAuthentication();
-        services.AddDbContext<MemoAna.BackendDbContext>(options =>
+        services.AddDbContext<MemoAnaDbContext>(options =>
             options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
         services.AddIdentityCore<User>(options =>
         {
@@ -34,7 +34,7 @@ public sealed class ConfiguredIdentityTestFixture : IDisposable
             options.Password.RequiredLength = 4;
             options.SignIn.RequireConfirmedEmail = false;
         }).AddRoles<Role>()
-        .AddEntityFrameworkStores<MemoAna.BackendDbContext>()
+        .AddEntityFrameworkStores<MemoAnaDbContext>()
         .AddSignInManager();
         services.AddScoped<IIdentityEmailSender,
             TestIdentityEmailSender>();

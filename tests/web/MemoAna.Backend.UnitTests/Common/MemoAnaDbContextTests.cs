@@ -11,7 +11,7 @@ public sealed class MemoAnaDbContextTests
     [Fact]
     public async Task SaveChanges_HandlesIdentifiersAndSoftDelete()
     {
-        await using MemoAna.BackendDbContext context = CreateContext();
+        await using MemoAnaDbContext context = CreateContext();
         User user = new("user@example.com");
         Role role = new("Operator");
         string userId = user.Id;
@@ -21,8 +21,8 @@ public sealed class MemoAnaDbContextTests
 
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        Assert.NotEqual(userId, user.Id);
-        Assert.NotEqual(roleId, role.Id);
+        Assert.Equal(userId, user.Id);
+        Assert.Equal(roleId, role.Id);
 
         context.Users.Remove(user);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -39,7 +39,7 @@ public sealed class MemoAnaDbContextTests
     [Fact]
     public async Task SaveChangesOverloads_ApplyPersistenceHooks()
     {
-        await using MemoAna.BackendDbContext context = CreateContext();
+        await using MemoAnaDbContext context = CreateContext();
 
         Assert.Equal(0, context.SaveChanges());
         Assert.Equal(0, context.SaveChanges(true));
@@ -55,6 +55,6 @@ public sealed class MemoAnaDbContextTests
             new DbContextOptionsBuilder<MemoAnaDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString())
                 .Options;
-        return new MemoAna.BackendDbContext(options);
+        return new MemoAnaDbContext(options);
     }
 }

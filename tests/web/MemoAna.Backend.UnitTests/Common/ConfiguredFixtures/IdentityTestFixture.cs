@@ -28,7 +28,7 @@ public sealed class IdentityTestFixture : IDisposable
         services.AddHttpContextAccessor();
         services.AddAuthentication(options => options.DefaultScheme = IdentityConstants.ApplicationScheme)
             .AddCookie(IdentityConstants.ApplicationScheme);
-        services.AddDbContext<MemoAna.BackendDbContext>(options => options.UseInMemoryDatabase(Guid.NewGuid().ToString("N")));
+        services.AddDbContext<MemoAnaDbContext>(options => options.UseInMemoryDatabase(Guid.NewGuid().ToString("N")));
         services.AddIdentityCore<User>(options =>
             {
                 options.User.RequireUniqueEmail = true;
@@ -41,7 +41,7 @@ public sealed class IdentityTestFixture : IDisposable
             })
             .AddRoles<Role>()
             .AddSignInManager<SignInManager<User>>()
-            .AddEntityFrameworkStores<MemoAna.BackendDbContext>()
+            .AddEntityFrameworkStores<MemoAnaDbContext>()
             .AddDefaultTokenProviders();
         services.Configure<JwtOptions>(options =>
         {
@@ -57,7 +57,7 @@ public sealed class IdentityTestFixture : IDisposable
         services.AddScoped<IdentityService>();
         
         _provider = services.BuildServiceProvider();
-        _provider.GetRequiredService<MemoAna.BackendDbContext>().Database.EnsureCreated();
+        _provider.GetRequiredService<MemoAnaDbContext>().Database.EnsureCreated();
     }
         
     public IdentityService Service => _provider.GetRequiredService<IdentityService>();
