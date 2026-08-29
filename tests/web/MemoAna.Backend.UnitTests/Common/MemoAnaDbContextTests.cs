@@ -6,7 +6,7 @@ using Xunit;
 namespace MemoAna.Backend.UnitTests.Common;
 
 /// <summary>Tests database context persistence behaviors.</summary>
-public sealed class MemoAna.BackendDbContextTests
+public sealed class MemoAnaDbContextTests
 {
     [Fact]
     public async Task SaveChanges_HandlesIdentifiersAndSoftDelete()
@@ -49,10 +49,10 @@ public sealed class MemoAna.BackendDbContextTests
             true, CancellationToken.None));
     }
 
-    private static MemoAna.BackendDbContext CreateContext()
+    private static MemoAnaDbContext CreateContext()
     {
-        DbContextOptions<MemoAna.BackendDbContext> options =
-            new DbContextOptionsBuilder<MemoAna.BackendDbContext>()
+        DbContextOptions<MemoAnaDbContext> options =
+            new DbContextOptionsBuilder<MemoAnaDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString())
                 .Options;
         return new MemoAna.BackendDbContext(options);
