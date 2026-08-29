@@ -15,19 +15,19 @@ jobs:
 
     steps:
     - name: Checkout 
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Setup .NET SDK
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: '10.0.x' 
 
     - name: Publish
-      run: dotnet publish ./src/docs/cge.github.io/cge.github.io.csproj -c Release -o release /p:BlazorEnableCompression=false
+      run: dotnet publish ./src/docs/memoana.github.io/memoana.github.io.csproj -c Release -o release /p:BlazorEnableCompression=false
 
     - name: Setup base path
       run: |
-        sed -i 's/<base href="\/" \/>/<base href="\/CGE\/" \/>/g' release/wwwroot/index.html
+        sed -i 's/<base href="\/" \/>/<base href="\/MemoAna\/" \/>/g' release/wwwroot/index.html
         
         touch release/wwwroot/.nojekyll
         
