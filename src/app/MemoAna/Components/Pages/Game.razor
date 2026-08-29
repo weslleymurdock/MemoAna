@@ -102,9 +102,9 @@
                              Style="height:70vh;"
                              @bind-SelectedIndex="selectedIndex"
                              AutoCycle="false"
-                             EnableSwipeGesture="false"
-                             ShowArrows="false"
-                             ShowBullets="false"
+                             EnableSwipeGesture="true"
+                             ShowArrows="true"
+                             ShowBullets="true"                  
                              BulletsColor="Color.Surface"
                              ArrowsColor="Color.Surface">
                     <ItemTemplate Context="theme">
@@ -112,14 +112,9 @@
                             <div class="theme-card-header">
                                 <MudText Class="theme-name">@theme.ThemeName</MudText>
                             </div>
-
-                            <button type="button"
-                                    class="theme-select-button @(IsSelected(theme) ? "theme-preview-selected" : string.Empty)"
-                                    @onclick="@(() => SelectThemeAsync(theme))">
-                                <MudImage Src="@GetThemeImage(theme)"
-                                          Class="theme-image"
-                                          Alt="@theme.ThemeName" />
-                            </button>
+                            <MudButton Class=@("theme-select-button "+(IsSelected(theme) ? "theme-preview-selected" : string.Empty)) OnClick="@(async () => await SelectThemeAsync(theme))">
+                                <MudImage Src="@GetThemeImage(theme)" Class="theme-image" Alt="@theme.ThemeName" />
+                            </MudButton>
                         </div>
                     </ItemTemplate>
                 </MudCarousel>
@@ -197,9 +192,10 @@ else
 @code {
     private bool IsSelecting { get; set; } = true;
     private bool IsBusy { get; set; }
+    /// <summary> Flag to mark if the game is currently active (running).</summary>
     private bool IsGameActive { get; set; }
+    /// <summary> Flag to mark if the game is currently finished.</summary>
     private bool IsGameFinished { get; set; }
-
     private string Theme { get; set; } = string.Empty;
     private string GameTime { get; set; } = "00:00";
     private string CurrentScore { get; set; } = "000";
@@ -291,6 +287,8 @@ else
 
         IsBusy = true;
         IsSelecting = false;
+        await InvokeAsync(StateHasChanged);
+
         IsGameActive = false;
         IsGameFinished = false;
         IsVictory = string.Empty;
@@ -347,7 +345,7 @@ else
     {
         0 => 75,
         1 => 100,
-        2 => 120,
+        2 => 150,
         _ => 75
     };
 
@@ -364,11 +362,8 @@ else
 
     private async Task FlipCard(int position, MemoryCard card)
     {
-        if (IsBusy || !IsGameActive || card.IsFaceUp || card.IsMatched)
+        if (!IsGameActive || card.IsFaceUp || card.IsMatched)
             return;
-
-        IsBusy = true;
-        await InvokeAsync(StateHasChanged);
 
         try
         {
@@ -378,7 +373,6 @@ else
         }
         finally
         {
-            IsBusy = false;
             await InvokeAsync(StateHasChanged);
         }
     }
@@ -565,6 +559,17 @@ else
         margin: 30px 0;
     }
 
+    .theme-carousel > .d-flex {
+        pointer-events: none;
+    }
+
+    .theme-carousel > .d-flex button,
+    .theme-carousel > .d-flex .mud-icon-button,
+    .theme-carousel > .d-flex .mud-button-root,
+    .theme-carousel > .d-flex [tabindex] {
+        pointer-events: auto;
+    }
+
     .theme-item {
         width: 250px;
         height: 25svh;
@@ -598,6 +603,7 @@ else
         appearance: none;
         -webkit-appearance: none;
         outline: none;
+        pointer-events: auto;
     }
 
     .theme-select-button:hover {
